@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Prove AI v6</title>
+<title>Prove AI v7</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -153,6 +153,7 @@ iframe{
     max-width:90%;
     line-height:1.5;
     word-wrap:break-word;
+    white-space:pre-wrap;
 }
 
 .msg.ai{
@@ -296,7 +297,7 @@ iframe{
                 type="file"
                 id="fileInput"
                 style="display:none"
-                accept=".txt,.pdf">
+                accept=".txt,.pdf,.doc,.docx">
 
             </div>
 
@@ -357,7 +358,8 @@ iframe{
 
 let mediaRecorder;
 let audioChunks = [];
-let context = "";
+
+let uploadedFile = null;
 
 let dividerLocked = false;
 let isDragging = false;
@@ -398,27 +400,29 @@ async function runChat(){
 
     try{
 
-        /* LIMIT PAYLOAD */
+        const formData =
+         new FormData();
 
-        const safeContext =
-         context.slice(0,15000);
+        formData.append(
+            'message',
+            val
+        );
+
+        if(uploadedFile){
+
+            formData.append(
+                'file',
+                uploadedFile
+            );
+
+        }
 
         const response =
          await fetch('/api/chat',{
 
             method:'POST',
 
-            headers:{
-                'Content-Type':'application/json'
-            },
-
-            body:JSON.stringify({
-
-                message:val,
-
-                context:safeContext
-
-            })
+            body:formData
 
          });
 
@@ -556,31 +560,12 @@ document.getElementById('fileInput')
 
     if(!file) return;
 
-    const reader =
-     new FileReader();
+    uploadedFile = file;
 
-    reader.onload = r=>{
-
-        context =
-         r.target.result || '';
-
-        addMsg(
-            `📁 โหลดเอกสาร "${file.name}" แล้ว`,
-            'ai'
-        );
-
-    };
-
-    reader.onerror = ()=>{
-
-        addMsg(
-            '❌ อ่านเอกสารไม่สำเร็จ',
-            'ai'
-        );
-
-    };
-
-    reader.readAsText(file);
+    addMsg(
+        `📁 โหลดเอกสาร "${file.name}" แล้ว`,
+        'ai'
+    );
 
 };
 
