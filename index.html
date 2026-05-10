@@ -216,6 +216,63 @@ async function runChat() {
 
         document.getElementById('sendBtn').onclick = runChat;
         document.getElementById('userInput').onkeydown = e => { if(e.key === 'Enter') runChat(); };
+
+const divider = document.getElementById('divider');
+
+divider.addEventListener('mousedown', () => {
+    isDragging = true;
+});
+
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+window.addEventListener('mousemove', (e) => {
+
+    if (!isDragging) return;
+
+    const total = window.innerWidth;
+    const leftWidth = (e.clientX / total) * 100;
+
+    if (leftWidth > 20 && leftWidth < 80) {
+        leftPanel.style.width = leftWidth + '%';
+        rightPanel.style.width = (100 - leftWidth) + '%';
+    }
+
+});
+
+// กดครั้งเดียว auto slide
+
+divider.addEventListener('click', () => {
+
+    autoSlide = !autoSlide;
+
+    if (autoSlide) {
+
+        let dir = 1;
+        let size = 70;
+
+        slideInterval = setInterval(() => {
+
+            size += dir;
+
+            if (size >= 80) dir = -1;
+            if (size <= 40) dir = 1;
+
+            leftPanel.style.width = size + '%';
+            rightPanel.style.width = (100 - size) + '%';
+
+        }, 100);
+
+    } else {
+
+        clearInterval(slideInterval);
+
+    }
+
+});
+
+        
     </script>
 </body>
 </html>
