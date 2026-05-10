@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prove AI v13 FINAL STABLE</title>
+<title>Prove AI STABLE v14</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -18,58 +18,78 @@
 html,body{
     width:100%;
     height:100%;
-    background:#f1f5f9;
     overflow:hidden;
+    background:#f1f5f9;
 }
 
-.app-container{
+/* MAIN LAYOUT */
+.app{
     display:flex;
     width:100%;
     height:100%;
 }
 
-/* LEFT */
-.left-panel{
+/* LEFT (MEETING) */
+.left{
     width:70%;
     display:flex;
     flex-direction:column;
-    padding:12px;
+    padding:10px;
 }
 
-.meeting-box{
+.meeting{
     flex:1;
     background:#0f172a;
-    border-radius:16px;
+    border-radius:14px;
     overflow:hidden;
     border:2px solid #cbd5e1;
-    position:relative;
 }
 
-iframe{
+.meeting iframe{
     width:100%;
     height:100%;
     border:0;
 }
 
-/* RIGHT */
-.right-panel{
+/* CONTROL */
+.control{
+    display:flex;
+    gap:10px;
+    padding:10px;
+    background:white;
+    border-radius:12px;
+    margin-top:10px;
+}
+
+button{
+    border:none;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.btn{background:#2563eb;color:white;}
+.copy{background:#10b981;color:white;}
+
+/* RIGHT (AI) */
+.right{
     width:30%;
     display:flex;
     flex-direction:column;
     background:white;
 }
 
-.chat-header{
+.header{
     background:#1e1b4b;
     color:white;
     text-align:center;
-    padding:18px;
+    padding:16px;
 }
 
-.chat-body{
+.chat{
     flex:1;
     overflow-y:auto;
-    padding:15px;
+    padding:12px;
     display:flex;
     flex-direction:column;
     gap:10px;
@@ -77,56 +97,40 @@ iframe{
 }
 
 .msg{
+    padding:10px;
+    border-radius:12px;
     max-width:90%;
-    padding:12px;
-    border-radius:14px;
     white-space:pre-wrap;
 }
 
-.msg.ai{background:#e0e7ff;align-self:flex-start;}
-.msg.user{background:#1e1b4b;color:white;align-self:flex-end;}
+.ai{background:#e0e7ff;align-self:flex-start;}
+.user{background:#1e1b4b;color:white;align-self:flex-end;}
 
-.chat-input-zone{
+.input{
     display:flex;
     gap:10px;
-    padding:12px;
-    border-top:1px solid #eee;
+    padding:10px;
+    border-top:1px solid #ddd;
 }
 
-#userInput{
+input{
     flex:1;
     padding:10px;
     border-radius:20px;
     border:1px solid #ddd;
 }
 
-.send-btn{
+.send{
     background:#1e1b4b;
     color:white;
-    border:none;
-    border-radius:20px;
-    padding:10px 16px;
-    cursor:pointer;
 }
 
-/* CONTROL */
-.control{
-    padding:12px;
-    background:white;
-    border-top:1px solid #ddd;
-    display:flex;
-    gap:10px;
-}
-
-.btn{background:#2563eb;color:white;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;}
-.copy{background:#10b981;}
-
-/* MOBILE FIX */
+/* MOBILE */
 @media(max-width:768px){
-    .app-container{
+    .app{
         flex-direction:column;
     }
-    .left-panel,.right-panel{
+    .left,.right{
         width:100%;
         height:50%;
     }
@@ -136,38 +140,36 @@ iframe{
 
 <body>
 
-<div class="app-container">
+<div class="app">
 
 <!-- LEFT -->
-<div class="left-panel">
+<div class="left">
 
-    <div class="meeting-box" id="screen">
+    <div class="meeting" id="screen">
         <div style="color:white;text-align:center;padding-top:20%">
             🎥 Prove AI Meeting
         </div>
     </div>
 
     <div class="control">
-        <button class="btn" id="startJitsi">🔄 Start Meeting</button>
-        <button class="copy" id="copyLink">📋 Copy Link</button>
+        <button class="btn" id="start">🔄 Start</button>
+        <button class="copy" id="copy">📋 Copy</button>
     </div>
 
 </div>
 
 <!-- RIGHT -->
-<div class="right-panel">
+<div class="right">
 
-    <div class="chat-header">
-        🤖 Prove AI
+    <div class="header">🤖 Prove AI</div>
+
+    <div class="chat" id="chat">
+        <div class="msg ai">AI พร้อม + RAG พร้อมใช้งาน</div>
     </div>
 
-    <div class="chat-body" id="chatBox">
-        <div class="msg ai">พร้อม AI + RAG + ประชุม</div>
-    </div>
-
-    <div class="chat-input-zone">
-        <input id="userInput" placeholder="ถาม AI...">
-        <button class="send-btn" id="sendBtn">ส่ง</button>
+    <div class="input">
+        <input id="text" placeholder="ถาม AI...">
+        <button class="send" id="send">ส่ง</button>
     </div>
 
 </div>
@@ -176,62 +178,72 @@ iframe{
 
 <script>
 
-let currentMeetingUrl = "";
+let url="";
 
-/* CHAT */
-function addMsg(text,type){
-    const d=document.createElement("div");
-    d.className="msg "+type;
-    d.innerText=text;
-    chatBox.appendChild(d);
-    chatBox.scrollTop=999999;
-}
+/* ===== AI (RESTORE ของจริง) ===== */
+send.onclick=async()=>{
 
-/* AI HOOK (RAG เดิมของคุณต่อได้ตรงนี้) */
-sendBtn.onclick=()=>{
-    if(!userInput.value)return;
+    if(!text.value) return;
 
-    addMsg(userInput.value,"user");
+    add(text.value,"user");
 
-    // 🔥 จุดต่อ RAG ENGINE ของคุณ
-    addMsg("🧠 AI วิเคราะห์ (RAG ENGINE ACTIVE)", "ai");
+    try{
 
-    userInput.value="";
+        const fd=new FormData();
+        fd.append("message",text.value);
+
+        const res=await fetch("/api/chat",{
+            method:"POST",
+            body:fd
+        });
+
+        const data=await res.json();
+
+        add(data.reply || "AI ไม่ตอบ","ai");
+
+    }catch(e){
+        add("❌ AI error","ai");
+    }
+
+    text.value="";
 };
 
-/* JITSI FIX (MOBILE MIC WORKING) */
-startJitsi.onclick = () => {
+/* ===== CHAT UI ===== */
+function add(t,type){
+    const d=document.createElement("div");
+    d.className="msg "+type;
+    d.innerText=t;
+    chat.appendChild(d);
+    chat.scrollTop=999999;
+}
 
-    const room = "ProveAI-" + Date.now();
-    currentMeetingUrl = "https://meet.jit.si/" + room;
+/* ===== JITSI (STABLE + MIC FIX) ===== */
+start.onclick=()=>{
 
-    screen.innerHTML = `
+    const room="ProveAI-"+Date.now();
+    url="https://meet.jit.si/"+room;
+
+    screen.innerHTML=`
     <iframe
-        src="${currentMeetingUrl}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false"
+        src="${url}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false"
         allow="camera; microphone; fullscreen; display-capture; autoplay"
     ></iframe>
     `;
 
-    addMsg(
-`📡 AI ส่งลิงก์ประชุม
+    add("📡 link: "+url,"ai");
 
-${currentMeetingUrl}
-(กด copy ได้เลย)`,
-"ai");
-
-    navigator.clipboard.writeText(currentMeetingUrl).catch(()=>{});
 };
 
 /* COPY */
-copyLink.onclick = async () => {
+copy.onclick=async()=>{
 
-    if(!currentMeetingUrl){
-        addMsg("ยังไม่มีลิงก์ประชุม","ai");
+    if(!url){
+        add("ยังไม่มีลิงก์","ai");
         return;
     }
 
-    await navigator.clipboard.writeText(currentMeetingUrl);
-    addMsg("📋 copied link แล้ว","ai");
+    await navigator.clipboard.writeText(url);
+    add("📋 copied","ai");
 };
 
 </script>
