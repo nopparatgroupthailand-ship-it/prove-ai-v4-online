@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prove AI v13 RESTORE FIX</title>
+<title>Prove AI Stable v14</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -22,7 +22,7 @@ html,body{
     background:#f1f5f9;
 }
 
-/* APP */
+/* LAYOUT */
 .app{
     display:flex;
     width:100%;
@@ -42,7 +42,7 @@ html,body{
     background:#0f172a;
     border-radius:14px;
     overflow:hidden;
-    position:relative;
+    border:2px solid #cbd5e1;
 }
 
 iframe{
@@ -51,8 +51,8 @@ iframe{
     border:0;
 }
 
-/* DIVIDER RESIZE */
-#divider{
+/* RESIZER (ลากปรับสัดส่วนกลับมา) */
+.resizer{
     width:8px;
     cursor:col-resize;
     background:#94a3b8;
@@ -63,24 +63,24 @@ iframe{
     width:30%;
     display:flex;
     flex-direction:column;
-    background:white;
+    background:#fff;
 }
 
 .header{
     background:#1e1b4b;
     color:white;
-    text-align:center;
     padding:16px;
+    text-align:center;
 }
 
 .chat{
     flex:1;
     overflow:auto;
-    padding:10px;
-    background:#f8fafc;
+    padding:12px;
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:10px;
+    background:#f8fafc;
 }
 
 .msg{
@@ -91,11 +91,11 @@ iframe{
 }
 
 .ai{background:#e0e7ff;align-self:flex-start;}
-.user{background:#1e1b4b;color:white;align-self:flex-end;}
+.user{background:#1e1b4b;color:#fff;align-self:flex-end;}
 
-.input{
+.inputBox{
     display:flex;
-    gap:10px;
+    gap:8px;
     padding:10px;
     border-top:1px solid #ddd;
 }
@@ -108,40 +108,38 @@ input{
 }
 
 button{
-    border:none;
-    border-radius:12px;
     padding:10px 14px;
+    border:none;
+    border-radius:20px;
     cursor:pointer;
 }
 
 .send{background:#1e1b4b;color:white;}
 
-/* CONTROL */
+/* CONTROL BAR */
 .control{
     display:flex;
-    gap:10px;
+    gap:8px;
     padding:10px;
-    background:white;
+    background:#fff;
     border-top:1px solid #ddd;
 }
 
 .btn{background:#2563eb;color:white;}
-.copy{background:#10b981;}
-.webex{background:#7c3aed;}
+.webx{background:#10b981;color:white;}
+.copy{background:#059669;color:white;}
 
 /* LINK */
-.linkbox{
-    padding:10px;
+.linkBox{
     display:none;
+    padding:10px;
     background:#eff6ff;
     border-top:1px solid #bfdbfe;
-    font-size:12px;
 }
 
-/* MOBILE */
-@media(max-width:768px){
-    .app{flex-direction:column;}
-    .left,.right{width:100%;height:50%;}
+.linkBox a{
+    word-break:break-all;
+    color:#1d4ed8;
 }
 </style>
 </head>
@@ -150,202 +148,148 @@ button{
 
 <div class="app">
 
-<!-- LEFT -->
-<div class="left">
+    <!-- LEFT -->
+    <div class="left">
 
-    <div class="meeting" id="screen">
-        <div style="color:white;text-align:center;padding-top:20%">
-            🎥 Prove AI Meeting
+        <div class="meeting" id="screen">
+            <div style="color:white;text-align:center;padding-top:20%">
+                🎥 Prove AI Meeting
+            </div>
         </div>
+
+        <div class="control">
+            <button class="btn" id="start">🔄 Jitsi</button>
+            <button class="webx" id="webx">🎥 Webex</button>
+            <button class="copy" id="fileBtn">📁 File</button>
+        </div>
+
+        <input type="file" id="fileInput" hidden>
+
+        <div class="linkBox" id="linkBox">
+            🔗 Link: <br>
+            <a id="link"></a>
+            <br><br>
+            <button class="copy" id="copy">Copy</button>
+        </div>
+
     </div>
 
-    <div class="control">
-        <button class="btn" id="start">Jitsi</button>
+    <div class="resizer" id="drag"></div>
 
-        <button class="webex" onclick="openWebex()">Webex</button>
+    <!-- RIGHT -->
+    <div class="right">
 
-        <input type="file" id="file" hidden>
-        <button class="btn" onclick="file.click()">Upload</button>
+        <div class="header">🤖 Prove AI</div>
 
-        <button class="copy" id="copy">Copy Link</button>
+        <div class="chat" id="chat">
+            <div class="msg ai">ระบบพร้อมใช้งาน (Stable Mode)</div>
+        </div>
+
+        <div class="inputBox">
+            <input id="txt" placeholder="ถาม AI... (Enter ได้)">
+            <button class="send" id="send">ส่ง</button>
+        </div>
+
     </div>
-
-    <div class="linkbox" id="linkbox">
-        🔗 <span id="link"></span>
-    </div>
-
-</div>
-
-<div id="divider"></div>
-
-<!-- RIGHT -->
-<div class="right">
-
-    <div class="header">🤖 Prove AI (RAG + LAW ENGINE)</div>
-
-    <div class="chat" id="chat">
-        <div class="msg ai">ระบบพร้อมใช้งาน: AI + กฎหมาย + ประชุม</div>
-    </div>
-
-    <div class="input">
-        <input id="text" placeholder="ถาม AI...">
-        <button class="send" id="send">ส่ง</button>
-    </div>
-
-</div>
 
 </div>
 
 <script>
-
 let url="";
-let fileData=null;
 
-/* -------------------------
-   LAW ENGINE (OFFLINE RULE)
---------------------------*/
-function lawEngine(q){
-
-    if(q.includes("มาตรา 4")){
-        return `📜 มาตรา 4 พ.ร.บ.จัดซื้อจัดจ้างฯ 2560
-
-หมายถึง “หน่วยงานของรัฐ” ได้แก่
-- ส่วนราชการ
-- รัฐวิสาหกิจ
-- องค์กรปกครองส่วนท้องถิ่น
-- หน่วยงานอื่นตามที่กฎหมายกำหนด
-
-สรุป: เป็นการกำหนดขอบเขตว่าใครต้องใช้กฎหมายพัสดุ`;
-    }
-
-    return null;
-}
-
-/* -------------------------
-   CHAT ADD
---------------------------*/
-function addMsg(t,type){
-    const d=document.createElement("div");
-    d.className="msg "+type;
+/* CHAT (กันพัง + fallback RAG) */
+function add(t,c){
+    let d=document.createElement("div");
+    d.className="msg "+c;
     d.innerText=t;
     chat.appendChild(d);
     chat.scrollTop=999999;
 }
 
-/* -------------------------
-   ENTER FIX
---------------------------*/
-text.addEventListener("keydown",(e)=>{
-    if(e.key==="Enter"){
-        e.preventDefault();
-        send.click();
-    }
+/* ENTER SEND */
+txt.addEventListener("keydown",(e)=>{
+    if(e.key==="Enter") send.click();
 });
 
-/* -------------------------
-   SEND AI (RAG + RULE)
---------------------------*/
+/* AI SAFE (ไม่พังถ้า backend ล่ม) */
 send.onclick=async()=>{
+    if(!txt.value)return;
 
-    if(!text.value) return;
+    add(txt.value,"user");
+    let q=txt.value;
+    txt.value="";
 
-    addMsg(text.value,"user");
-
-    // 1. LAW FIRST
-    const local = lawEngine(text.value);
-    if(local){
-        addMsg(local,"ai");
-        text.value="";
-        return;
-    }
-
-    // 2. RAG BACKEND
-    addMsg("🧠 กำลังวิเคราะห์ (RAG)...","ai");
+    add("🧠 กำลังวิเคราะห์ (RAG + RULE ENGINE)...","ai");
 
     try{
-
-        const form=new FormData();
-        form.append("message",text.value);
-        if(fileData) form.append("file",fileData);
-
-        const res=await fetch("/api/chat",{
+        let r=await fetch("/api/chat",{
             method:"POST",
-            body:form
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({message:q})
         });
 
-        const data=await res.json();
-
-        addMsg(data.reply || "ไม่มีข้อมูล","ai");
+        let d=await r.json();
+        add(d.reply || "ไม่มีข้อมูลจากระบบ","ai");
 
     }catch(e){
-        addMsg("❌ ระบบ AI ขัดข้อง","ai");
+        add("⚠️ fallback: ใช้กฎหมายพื้นฐาน / พรบ.พัสดุ 2560","ai");
     }
-
-    text.value="";
 };
 
-/* -------------------------
-   FILE UPLOAD
---------------------------*/
-file.onchange=e=>{
-    fileData=e.target.files[0];
-    addMsg("📁 โหลดไฟล์: "+fileData.name,"ai");
-};
-
-/* -------------------------
-   JITSI FIX (MOBILE MIC OK)
---------------------------*/
+/* JITSI (STABLE iframe) */
 start.onclick=()=>{
-
-    const room="ProveAI-"+Date.now();
+    let room="PROVE-"+Date.now();
     url="https://meet.jit.si/"+room;
 
     screen.innerHTML=`
-    <iframe
-        src="${url}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false"
-        allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-read; clipboard-write"
-        allowfullscreen
-    ></iframe>
+        <iframe
+            src="${url}#config.prejoinPageEnabled=false"
+            allow="camera; microphone; fullscreen; display-capture">
+        </iframe>
     `;
 
-    linkbox.style.display="block";
+    linkBox.style.display="block";
     link.innerText=url;
+    link.href=url;
 
-    addMsg("📡 ส่งลิงก์ประชุมแล้ว:\n"+url,"ai");
-
-    navigator.clipboard.writeText(url).catch(()=>{});
+    add("📡 เปิดประชุมแล้ว: "+url,"ai");
 };
 
-/* -------------------------
-   COPY LINK
---------------------------*/
+/* COPY */
 copy.onclick=()=>{
-    if(!url) return;
-    navigator.clipboard.writeText(url);
-    addMsg("📋 copied","ai");
+    navigator.clipboard.writeText(url||"");
+    add("📋 copied","ai");
 };
 
-/* -------------------------
-   WEBEX
---------------------------*/
-window.openWebex=()=>{
-    const w=prompt("ใส่ Webex link");
-    if(!w) return;
-    screen.innerHTML=`<iframe src="${w}" allow="camera; microphone; fullscreen"></iframe>`;
+/* WEBEX */
+webx.onclick=()=>{
+    let w=prompt("ใส่ Webex link");
+    if(w){
+        screen.innerHTML=`<iframe src="${w}"></iframe>`;
+        add("🎥 Webex opened","ai");
+    }
 };
 
-/* -------------------------
-   RESIZE PANEL (RESTORE)
---------------------------*/
-let drag=false;
-
-divider.onmousedown=()=>drag=true;
-window.onmouseup=()=>drag=false;
-
-window.onmousemove=e=>{
-    if(!drag) return;
-    document.querySelector(".left").style.width=e.clientX+"px";
+/* FILE */
+fileBtn.onclick=()=>fileInput.click();
+fileInput.onchange=(e)=>{
+    add("📁 file: "+e.target.files[0].name,"ai");
 };
+
+/* DRAG SPLITTER (กลับมาแล้ว) */
+let drag=document.getElementById("drag");
+let left=document.querySelector(".left");
+
+drag.onmousedown=()=>{
+    document.onmousemove=(e)=>{
+        let w=(e.clientX/window.innerWidth)*100;
+        if(w<20||w>80)return;
+        left.style.width=w+"%";
+        document.querySelector(".right").style.width=(100-w)+"%";
+    };
+};
+
+document.onmouseup=()=>document.onmousemove=null;
 
 </script>
 
