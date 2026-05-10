@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prove AI v4 - ระบบประชุมจังหวัดแพร่</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+    </script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
+        body, html { background-color: #f0f2f5; height: 100%; width: 100%; overflow: hidden; }
+        .app-container { display: flex; width: 100vw; height: 100vh; }
+
+        /* ฝั่งซ้าย 70% */
+        .left-panel { flex: 0 0 70%; padding: 20px; display: flex; flex-direction: column; background-color: #f8fafc; border-right: 2px solid #e2e8f0; }
+        .meeting-area { flex: 1; width: 100%; background: #1e293b; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 2px solid #cbd5e1; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        .control-panel { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .btn-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn { flex: 1; padding: 12px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; color: white; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-webex { background-color: #10b981; }
+        .btn-jitsi { background-color: #3b82f6; }
+        .btn-record { background-color: #ef4444; }
+        .btn-stop { background-color: #4b5563; }
+        .status-badge { font-size: 12px; color: #ef4444; font-weight: bold; display: none; margin-left: 10px; }
+
+        /* ฝั่งขวา 30% */
+        .right-panel { flex: 0 0 30%; display: flex; flex-direction: column; background-color: #ffffff; }
+        .chat-header { padding: 20px; background-color: #1a237e; color: white; text-align: center; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: #f8f9fa; }
+        .msg { padding: 10px 14px; border-radius: 15px; max-width: 85%; font-size: 14px; }
+        .msg.ai { align-self: flex-start; background-color: #e8eaf6; color: #1a237e; }
+        .msg.user { align-self: flex-end; background-color: #1a237e; color: white; }
+        .chat-input { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 8px; }
+        .chat-input input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
+        .send-btn { background: #1a237e; color: white; border: none; padding: 0 20px; border-radius: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="left-panel">
+            <div class="meeting-area" id="meetingContainer">
+                <div style="color:white; text-align:center; padding-top:20%;"><h2>🎥 คลิกปุ่มสลับใช้ Jitsi เพื่อเริ่มประชุม</h2></div>
+            </div>
+            <div class="control-panel">
+                <div class="btn-row">
+                    <button class="btn btn-webex" onclick="window.open(prompt('วางลิงก์ Webex:'), '_blank')">🎥 เปิด Webex</button>
+                    <button class="btn btn-jitsi" id="startJitsi">🔄 เริ่ม Jitsi ในหน้านี้</button>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; border-top:1px solid #eee; padding-top:15px;">
+                    <div style="display:flex; align-items:center;">
+                        <button class="btn btn-record" id="startRec">🎙️ อัดเสียง</button>
+                        <button class="btn btn-stop" id="stopRec" disabled style="margin-left:5px;">⏹️ หยุด</button>
+                        <span class="status-badge" id="recStatus">● RECORDING</span>
+                    </div>
+                    <button class="btn" style="background:#64748b; font-size:12px; flex:0 0 auto;" onclick="document.getElementById('fileInput').click()">📁 อัปโหลดไฟล์ระเบียบ</button>
+                    <input type="file" id="fileInput" style="display:none" accept=".pdf,.txt">
+                </div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="chat-header"><h3>🤖 Prove AI Specialist</h3></div>
+            <div class="chat-messages" id="chatBox"></div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="พิมพ์ถามตอบ AI ตรงนี้...">
+                <button class="send-btn" id="sendBtn">ส่ง</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+        const API_KEY = "AIzaSyD-NGKFKHoCZix9rrFMaNing_w2wARAAGc";
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        let mediaRecorder, audioChunks = [], contextText = "";
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if(!text) return;
+            appendMsg(text, 'user');
+            input.value = "";
+            const loading = appendMsg("กำลังวิเคราะห์... 🧠", 'ai');
+            try {
+                const result = await model.generateContent(`ข้อมูลระเบียบ: ${contextText}\nคำถาม: ${text}`);
+                loading.remove();
+                appendMsg(result.response.text(), 'ai');
+            } catch (e) { loading.innerText = "🚨 เกิดข้อผิดพลาด (ลองรันผ่าน Vercel)"; }
+        }
+
+        function appendMsg(t, s) {
+            const div = document.createElement('div');
+            div.className = `msg ${s}`;
+            div.innerText = t;
+            document.getElementById('chatBox').appendChild(div);
+            document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
+            return div;
+        }
+
+        document.getElementById('sendBtn').onclick = sendMessage;
+        document.getElementById('userInput').onkeydown = e => { if(e.key === 'Enter') sendMessage(); };
+        document.getElementById('startJitsi').onclick = () => {
+            const room = "Phrae-Meeting-" + Date.now();
+            document.getElementById('meetingContainer').innerHTML = `<iframe src="https://meet.jit.si/${room}" allow="camera; microphone; fullscreen; display-capture; autoplay"></iframe>`;
+        };
+        document.getElementById('startRec').onclick = async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/wav' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Audio_Record.wav`; link.click(); audioChunks = [];
+            };
+            mediaRecorder.start();
+            document.getElementById('startRec').disabled = true; document.getElementById('stopRec').disabled = false;
+            document.getElementById('recStatus').style.display = 'inline';
+        };
+        document.getElementById('stopRec').onclick = () => {
+            mediaRecorder.stop(); document.getElementById('startRec').disabled = false;
+            document.getElementById('stopRec').disabled = true; document.getElementById('recStatus').style.display = 'none';
+        };
+        document.getElementById('fileInput').onchange = e => {
+            const reader = new FileReader();
+            reader.onload = res => { contextText = res.target.result; appendMsg(`อ่านไฟล์สำเร็จ ถามข้อมูลได้เลย`, 'ai'); };
+            reader.readAsText(e.target.files[0]);
+        };
+    </script>
+</body>
+</html>
