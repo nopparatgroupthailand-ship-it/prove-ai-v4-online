@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -41,7 +40,7 @@ html,body{
     flex-direction:column;
     padding:15px;
     background:#f8fafc;
-    transition:width .2s;
+    transition:none;
 }
 
 .meeting-box{
@@ -80,6 +79,11 @@ iframe{
     color:white;
     cursor:pointer;
     font-weight:bold;
+    transition:.2s;
+}
+
+.btn:hover{
+    opacity:.9;
 }
 
 .btn-webex{
@@ -105,15 +109,20 @@ iframe{
 /* DIVIDER */
 
 #divider{
-    width:8px;
+    width:10px;
     background:#94a3b8;
     cursor:col-resize;
     flex-shrink:0;
+    position:relative;
     transition:background .2s;
 }
 
 #divider:hover{
     background:#2563eb;
+}
+
+#divider.locked{
+    background:#16a34a;
 }
 
 /* RIGHT */
@@ -124,7 +133,7 @@ iframe{
     display:flex;
     flex-direction:column;
     background:white;
-    transition:width .2s;
+    transition:none;
 }
 
 .chat-header{
@@ -149,6 +158,7 @@ iframe{
     border-radius:15px;
     max-width:90%;
     word-wrap:break-word;
+    line-height:1.5;
 }
 
 .msg.ai{
@@ -176,6 +186,7 @@ iframe{
     padding:12px;
     border-radius:25px;
     border:1px solid #ddd;
+    outline:none;
 }
 
 .send-btn{
@@ -185,6 +196,12 @@ iframe{
     color:white;
     padding:0 20px;
     cursor:pointer;
+}
+
+.status{
+    font-size:12px;
+    margin-top:10px;
+    color:#64748b;
 }
 
 /* MOBILE */
@@ -207,7 +224,7 @@ iframe{
 
     #divider{
         width:100%;
-        height:6px;
+        height:8px;
         cursor:row-resize;
     }
 
@@ -266,7 +283,7 @@ iframe{
 
             </div>
 
-            <div style="display:flex;gap:10px;align-items:center;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
 
                 <button
                 class="btn btn-record"
@@ -289,6 +306,10 @@ iframe{
 
             </div>
 
+            <div class="status" id="dragStatus">
+                🔓 Divider ปลดล็อก — ลากปรับหน้าจอได้
+            </div>
+
         </div>
 
     </div>
@@ -306,7 +327,7 @@ iframe{
             <h3>🤖 Prove AI</h3>
 
             <p style="font-size:12px;opacity:.7;">
-                RAG Procurement Assistant
+                Hybrid Procurement Assistant
             </p>
 
         </div>
@@ -344,9 +365,8 @@ let mediaRecorder;
 let audioChunks = [];
 let context = "";
 
+let dividerLocked = false;
 let isDragging = false;
-let autoSlide = false;
-let slideInterval;
 
 const leftPanel =
  document.querySelector('.left-panel');
@@ -359,6 +379,9 @@ const divider =
 
 const appContainer =
  document.querySelector('.app-container');
+
+const dragStatus =
+ document.getElementById('dragStatus');
 
 /* AI */
 
@@ -526,6 +549,11 @@ document.getElementById('recOff')
 document.getElementById('fileInput')
 .onchange = e=>{
 
+    const file =
+     e.target.files[0];
+
+    if(!file) return;
+
     const reader =
      new FileReader();
 
@@ -535,15 +563,22 @@ document.getElementById('fileInput')
          r.target.result;
 
         addMsg(
-            'AI อ่านเอกสารแล้ว',
+            `📁 AI อ่านเอกสาร "${file.name}" แล้ว`,
             'ai'
         );
 
     };
 
-    reader.readAsText(
-        e.target.files[0]
-    );
+    reader.onerror = ()=>{
+
+        addMsg(
+            '❌ อ่านเอกสารไม่สำเร็จ',
+            'ai'
+        );
+
+    };
+
+    reader.readAsText(file);
 
 };
 
@@ -561,11 +596,40 @@ document.getElementById('userInput')
 
 };
 
-/* DIVIDER DRAG */
+/* DIVIDER LOCK */
+
+divider.addEventListener(
+'dblclick',
+()=>{
+
+    dividerLocked =
+     !dividerLocked;
+
+    if(dividerLocked){
+
+        divider.classList.add('locked');
+
+        dragStatus.innerText =
+         '🔒 Divider ถูกล็อก — หน้าจอคงที่';
+
+    }else{
+
+        divider.classList.remove('locked');
+
+        dragStatus.innerText =
+         '🔓 Divider ปลดล็อก — ลากปรับหน้าจอได้';
+
+    }
+
+});
+
+/* DRAG */
 
 divider.addEventListener(
 'mousedown',
 ()=>{
+
+    if(dividerLocked) return;
 
     isDragging = true;
 
@@ -585,59 +649,47 @@ e=>{
 
     if(!isDragging) return;
 
-    const total =
-     appContainer.clientWidth;
+    if(window.innerWidth <= 768){
 
-    const leftWidth =
-     (e.clientX / total) * 100;
+        const total =
+         appContainer.clientHeight;
 
-    if(
-        leftWidth > 20 &&
-        leftWidth < 80
-    ){
+        const topHeight =
+         (e.clientY / total) * 100;
 
-        leftPanel.style.width =
-         leftWidth + '%';
+        if(
+            topHeight > 20 &&
+            topHeight < 80
+        ){
 
-        rightPanel.style.width =
-         (100 - leftWidth) + '%';
+            leftPanel.style.height =
+             topHeight + '%';
 
-    }
+            rightPanel.style.height =
+             (100-topHeight) + '%';
 
-});
-
-/* CLICK AUTO SLIDE */
-
-divider.addEventListener(
-'click',
-()=>{
-
-    autoSlide = !autoSlide;
-
-    if(autoSlide){
-
-        let size = 70;
-        let dir = 1;
-
-        slideInterval =
-         setInterval(()=>{
-
-            size += dir;
-
-            if(size >= 80) dir = -1;
-            if(size <= 40) dir = 1;
-
-            leftPanel.style.width =
-             size + '%';
-
-            rightPanel.style.width =
-             (100 - size) + '%';
-
-         },100);
+        }
 
     }else{
 
-        clearInterval(slideInterval);
+        const total =
+         appContainer.clientWidth;
+
+        const leftWidth =
+         (e.clientX / total) * 100;
+
+        if(
+            leftWidth > 20 &&
+            leftWidth < 80
+        ){
+
+            leftPanel.style.width =
+             leftWidth + '%';
+
+            rightPanel.style.width =
+             (100-leftWidth) + '%';
+
+        }
 
     }
 
@@ -647,4 +699,3 @@ divider.addEventListener(
 
 </body>
 </html>
-```
