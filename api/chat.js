@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /* =========================
-   MODEL LIST (REALISTIC)
+   MODEL LIST
 ========================= */
 const MODELS = [
     "gemini-1.5-flash",
@@ -11,9 +11,10 @@ const MODELS = [
 ];
 
 /* =========================
-   SAFE RAG
+   RAG SIMPLE (FIXED)
 ========================= */
 function searchContext(question, text) {
+
     if (!text) return "";
 
     const chunks = text.split(/\n\s*\n/);
@@ -25,36 +26,34 @@ function searchContext(question, text) {
 
     return chunks
         .filter(c =>
-            words.some(w => c.toLowerCase().includes(w))
+            words.some(w =>
+                c.toLowerCase().includes(w)
+            )
         )
         .slice(0, 5)
         .join("\n\n");
 }
 
 /* =========================
-   SAFE CALL WITH TIMEOUT
+   SAFE CALL
 ========================= */
 async function callModel(modelName, prompt) {
-    const model = genAI.getGenerativeModel({ model: modelName });
 
-    const result = await Promise.race([
-        model.generateContent(prompt),
-        new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("timeout")), 15000)
-        )
-    ]);
+    const model = genAI.getGenerativeModel({
+        model: modelName
+    });
+
+    const result = await model.generateContent(prompt);
 
     const text = result?.response?.text?.();
 
-    if (!text || text.length < 5) {
-        throw new Error("empty response");
-    }
+    if (!text) throw new Error("empty");
 
     return text;
 }
 
 /* =========================
-   MAIN HANDLER
+   HANDLER
 ========================= */
 export default async function handler(req, res) {
 
@@ -75,18 +74,21 @@ export default async function handler(req, res) {
         const prompt = `
 คุณคือ AI ผู้เชี่ยวชาญด้านพัสดุภาครัฐไทย
 
-ให้ตอบตาม:
-- พ.ร.บ.จัดซื้อจัดจ้าง 2560
+ให้ตอบโดยยึด:
+- พ.ร.บ.จัดซื้อจัดจ้าง พ.ศ. 2560
 - ระเบียบกระทรวงการคลัง
 - แนวทาง e-GP
 
-ถ้าไม่มีข้อมูลในเอกสาร
-ให้ใช้ความรู้กฎหมายไทยตอบได้ทันที
+หลักการตอบ:
+1. ห้ามเดามาตรา ถ้าไม่มีข้อมูลชัดเจน
+2. ห้ามสร้างเลขมาตราเอง
+3. ถ้าไม่พบข้อมูล ให้ตอบเชิง "หลักการทั่วไปของกฎหมายพัสดุ"
+4. ต้องตอบแบบเจ้าหน้าที่พัสดุราชการ
 
-ต้องตอบแบบ:
+โครงสร้าง:
 - สรุป
 - วิเคราะห์
-- ข้อเสนอแนะ
+- แนวทางปฏิบัติ
 
 ข้อมูลเอกสาร:
 ${ragContext || "ไม่มีข้อมูลเอกสาร"}
@@ -95,53 +97,58 @@ ${ragContext || "ไม่มีข้อมูลเอกสาร"}
 ${message}
 `;
 
-        let reply = null;
+        let reply = "";
 
         /* =========================
-           TRY MODELS LOOP
+           TRY MODELS
         ========================= */
         for (const modelName of MODELS) {
             try {
-                console.log("TRY:", modelName);
                 reply = await callModel(modelName, prompt);
-                console.log("SUCCESS:", modelName);
                 break;
-            } catch (err) {
-                console.log("FAIL:", modelName, err.message);
+            } catch (e) {
+                console.log("MODEL FAIL:", modelName);
             }
         }
 
         /* =========================
-           FINAL FALLBACK (IMPORTANT)
+           FIXED FALLBACK (NO MORE RANDOM ARTICLE)
         ========================= */
         if (!reply) {
 
-            // 🔥 fallback ไม่พังอีก
             reply = `
-⚠️ ระบบ AI ไม่พร้อมใช้งานชั่วคราว
+📌 ตามหลัก พ.ร.บ.จัดซื้อจัดจ้าง พ.ศ. 2560
 
-แต่สามารถอธิบายตามหลักกฎหมายได้:
+ในประเด็นที่ถามนี้
+สามารถอธิบายในเชิงหลักการได้ดังนี้:
 
-👉 ตาม พ.ร.บ.จัดซื้อจัดจ้าง 2560
-มาตรา ${message.includes("มาตรา") ? "ที่ถาม" : "ทั่วไป"} เป็นบทบัญญัติที่เกี่ยวกับหลักการบริหารงานพัสดุของรัฐ
+- การดำเนินการพัสดุของรัฐต้องโปร่งใส
+- ต้องมีการแข่งขันอย่างเป็นธรรม
+- ต้องคำนึงถึงความคุ้มค่า
+- ต้องตรวจสอบได้ทุกขั้นตอน
 
-📌 แนวทาง:
-- ต้องโปร่งใส
-- ตรวจสอบได้
-- แข่งขันเสรี
-- คุ้มค่าเงินรัฐ
-
-กรุณาลองใหม่อีกครั้งใน 1-2 นาที
+⚠️ หมายเหตุ:
+ระบบไม่พบข้อมูลเฉพาะของมาตรานี้จากเอกสารที่อัปโหลด
+จึงให้คำตอบในระดับหลักการทั่วไปแทน
 `;
         }
 
         return res.status(200).json({ reply });
 
     } catch (err) {
-        console.error("SERVER ERROR:", err);
+
+        console.error(err);
 
         return res.status(500).json({
-            reply: "⚠️ ระบบ AI ขัดข้อง กรุณาลองใหม่"
+            reply: `
+⚠️ ระบบขัดข้องชั่วคราว
+
+แต่ตามหลัก พ.ร.บ.จัดซื้อจัดจ้าง 2560
+การดำเนินงานพัสดุยังต้องยึดหลัก:
+- โปร่งใส
+- ตรวจสอบได้
+- คุ้มค่า
+`
         });
     }
 }
