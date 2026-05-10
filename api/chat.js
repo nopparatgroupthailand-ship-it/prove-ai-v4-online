@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI }
-        const chunks = text.split('\n\n');
+        const chunks = text.split(/\\n\\s*\\n/)
 
         const results = chunks.filter(chunk => {
 
