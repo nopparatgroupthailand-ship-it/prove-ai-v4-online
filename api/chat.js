@@ -2,99 +2,59 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+/* =========================
+   MODEL LIST (REALISTIC)
+========================= */
 const MODELS = [
     "gemini-1.5-flash",
     "gemini-1.5-pro"
 ];
 
 /* =========================
-   RAG (STABLE)
+   SAFE RAG
 ========================= */
 function searchContext(question, text) {
-
     if (!text) return "";
 
     const chunks = text.split(/\n\s*\n/);
 
-    const qWords = question
+    const words = question
         .toLowerCase()
         .split(/\s+/)
         .filter(w => w.length > 2);
 
     return chunks
-        .map(chunk => {
-            let score = 0;
-            const lower = chunk.toLowerCase();
-
-            qWords.forEach(w => {
-                if (lower.includes(w)) score++;
-            });
-
-            return { chunk, score };
-        })
-        .sort((a, b) => b.score - a.score)
+        .filter(c =>
+            words.some(w => c.toLowerCase().includes(w))
+        )
         .slice(0, 5)
-        .map(x => x.chunk)
         .join("\n\n");
 }
 
 /* =========================
-   SAFE CALL (WITH RETRY)
+   SAFE CALL WITH TIMEOUT
 ========================= */
 async function callModel(modelName, prompt) {
+    const model = genAI.getGenerativeModel({ model: modelName });
 
-    const model = genAI.getGenerativeModel({
-        model: modelName,
-        generationConfig: {
-            temperature: 0.2,
-            topP: 0.8,
-            maxOutputTokens: 2048
-        }
-    });
+    const result = await Promise.race([
+        model.generateContent(prompt),
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("timeout")), 15000)
+        )
+    ]);
 
-    const result = await model.generateContent(prompt);
-    return result?.response?.text?.();
-}
+    const text = result?.response?.text?.();
 
-/* =========================
-   MAIN ENGINE (ROBUST)
-========================= */
-async function generateAI(prompt) {
-
-    let lastError = null;
-
-    for (const modelName of MODELS) {
-
-        for (let attempt = 0; attempt < 2; attempt++) {
-
-            try {
-
-                const text = await callModel(modelName, prompt);
-
-                if (text && text.trim().length > 10) {
-                    return text;
-                }
-
-            } catch (err) {
-
-                lastError = err;
-
-                console.log(
-                    `FAIL ${modelName} attempt ${attempt + 1}`,
-                    err.message
-                );
-
-                await new Promise(r => setTimeout(r, 300)); // กัน burst
-
-            }
-        }
+    if (!text || text.length < 5) {
+        throw new Error("empty response");
     }
 
-    throw lastError || new Error("ALL MODELS FAILED");
+    return text;
 }
 
 /* =========================
-   API
+   MAIN HANDLER
 ========================= */
 export default async function handler(req, res) {
 
@@ -113,55 +73,75 @@ export default async function handler(req, res) {
         const ragContext = searchContext(message, context || "");
 
         const prompt = `
-คุณคือ AI ด้านพัสดุภาครัฐไทย
+คุณคือ AI ผู้เชี่ยวชาญด้านพัสดุภาครัฐไทย
 
-ต้องตอบตาม:
-- พ.ร.บ. 2560
+ให้ตอบตาม:
+- พ.ร.บ.จัดซื้อจัดจ้าง 2560
 - ระเบียบกระทรวงการคลัง
-- e-GP
+- แนวทาง e-GP
 
-ห้ามตอบว่า "ไม่มีข้อมูล"
-ต้องพยายามวิเคราะห์จากความรู้กฎหมายเสมอ
+ถ้าไม่มีข้อมูลในเอกสาร
+ให้ใช้ความรู้กฎหมายไทยตอบได้ทันที
 
-เอกสาร:
+ต้องตอบแบบ:
+- สรุป
+- วิเคราะห์
+- ข้อเสนอแนะ
+
+ข้อมูลเอกสาร:
 ${ragContext || "ไม่มีข้อมูลเอกสาร"}
 
 คำถาม:
 ${message}
 `;
 
-        let reply;
+        let reply = null;
 
-        try {
+        /* =========================
+           TRY MODELS LOOP
+        ========================= */
+        for (const modelName of MODELS) {
+            try {
+                console.log("TRY:", modelName);
+                reply = await callModel(modelName, prompt);
+                console.log("SUCCESS:", modelName);
+                break;
+            } catch (err) {
+                console.log("FAIL:", modelName, err.message);
+            }
+        }
 
-            reply = await generateAI(prompt);
+        /* =========================
+           FINAL FALLBACK (IMPORTANT)
+        ========================= */
+        if (!reply) {
 
-        } catch (err) {
+            // 🔥 fallback ไม่พังอีก
+            reply = `
+⚠️ ระบบ AI ไม่พร้อมใช้งานชั่วคราว
 
-            console.error("AI HARD FAIL:", err);
-
-            return res.status(200).json({
-                reply: `
-⚠️ ระบบ AI ไม่พร้อมชั่วคราว
-
-แต่ยังสามารถให้คำแนะนำพื้นฐานได้:
+แต่สามารถอธิบายตามหลักกฎหมายได้:
 
 👉 ตาม พ.ร.บ.จัดซื้อจัดจ้าง 2560
-👉 มาตรา 20 เป็นหลักเกี่ยวกับการบริหารสัญญา/ขั้นตอนควบคุมงาน (เชิงหลักการ)
+มาตรา ${message.includes("มาตรา") ? "ที่ถาม" : "ทั่วไป"} เป็นบทบัญญัติที่เกี่ยวกับหลักการบริหารงานพัสดุของรัฐ
+
+📌 แนวทาง:
+- ต้องโปร่งใส
+- ตรวจสอบได้
+- แข่งขันเสรี
+- คุ้มค่าเงินรัฐ
 
 กรุณาลองใหม่อีกครั้งใน 1-2 นาที
-`
-            });
+`;
         }
 
         return res.status(200).json({ reply });
 
     } catch (err) {
-
-        console.error(err);
+        console.error("SERVER ERROR:", err);
 
         return res.status(500).json({
-            error: "SERVER ERROR"
+            reply: "⚠️ ระบบ AI ขัดข้อง กรุณาลองใหม่"
         });
     }
 }
