@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Prove AI v5</title>
+<title>Prove AI v6</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -40,7 +40,6 @@ html,body{
     flex-direction:column;
     padding:15px;
     background:#f8fafc;
-    transition:none;
 }
 
 .meeting-box{
@@ -50,7 +49,6 @@ html,body{
     overflow:hidden;
     margin-bottom:15px;
     border:2px solid #cbd5e1;
-    position:relative;
 }
 
 iframe{
@@ -79,7 +77,6 @@ iframe{
     color:white;
     cursor:pointer;
     font-weight:bold;
-    transition:.2s;
 }
 
 .btn:hover{
@@ -113,8 +110,6 @@ iframe{
     background:#94a3b8;
     cursor:col-resize;
     flex-shrink:0;
-    position:relative;
-    transition:background .2s;
 }
 
 #divider:hover{
@@ -133,7 +128,6 @@ iframe{
     display:flex;
     flex-direction:column;
     background:white;
-    transition:none;
 }
 
 .chat-header{
@@ -157,8 +151,8 @@ iframe{
     padding:12px;
     border-radius:15px;
     max-width:90%;
-    word-wrap:break-word;
     line-height:1.5;
+    word-wrap:break-word;
 }
 
 .msg.ai{
@@ -177,8 +171,8 @@ iframe{
     display:flex;
     gap:10px;
     padding:15px;
-    background:white;
     border-top:1px solid #eee;
+    background:white;
 }
 
 #userInput{
@@ -199,8 +193,8 @@ iframe{
 }
 
 .status{
-    font-size:12px;
     margin-top:10px;
+    font-size:12px;
     color:#64748b;
 }
 
@@ -307,7 +301,7 @@ iframe{
             </div>
 
             <div class="status" id="dragStatus">
-                🔓 Divider ปลดล็อก — ลากปรับหน้าจอได้
+                🔓 Divider ปลดล็อก — ลากได้
             </div>
 
         </div>
@@ -404,6 +398,11 @@ async function runChat(){
 
     try{
 
+        /* LIMIT PAYLOAD */
+
+        const safeContext =
+         context.slice(0,15000);
+
         const response =
          await fetch('/api/chat',{
 
@@ -414,8 +413,11 @@ async function runChat(){
             },
 
             body:JSON.stringify({
+
                 message:val,
-                context:context
+
+                context:safeContext
+
             })
 
          });
@@ -560,10 +562,10 @@ document.getElementById('fileInput')
     reader.onload = r=>{
 
         context =
-         r.target.result;
+         r.target.result || '';
 
         addMsg(
-            `📁 AI อ่านเอกสาร "${file.name}" แล้ว`,
+            `📁 โหลดเอกสาร "${file.name}" แล้ว`,
             'ai'
         );
 
@@ -610,14 +612,14 @@ divider.addEventListener(
         divider.classList.add('locked');
 
         dragStatus.innerText =
-         '🔒 Divider ถูกล็อก — หน้าจอคงที่';
+         '🔒 Divider ถูกล็อก';
 
     }else{
 
         divider.classList.remove('locked');
 
         dragStatus.innerText =
-         '🔓 Divider ปลดล็อก — ลากปรับหน้าจอได้';
+         '🔓 Divider ปลดล็อก';
 
     }
 
@@ -657,10 +659,7 @@ e=>{
         const topHeight =
          (e.clientY / total) * 100;
 
-        if(
-            topHeight > 20 &&
-            topHeight < 80
-        ){
+        if(topHeight > 20 && topHeight < 80){
 
             leftPanel.style.height =
              topHeight + '%';
@@ -678,10 +677,7 @@ e=>{
         const leftWidth =
          (e.clientX / total) * 100;
 
-        if(
-            leftWidth > 20 &&
-            leftWidth < 80
-        ){
+        if(leftWidth > 20 && leftWidth < 80){
 
             leftPanel.style.width =
              leftWidth + '%';
