@@ -2,16 +2,13 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/* =========================
-   MODEL LIST
-========================= */
 const MODELS = [
     "gemini-1.5-flash",
     "gemini-1.5-pro"
 ];
 
 /* =========================
-   RAG SIMPLE (FIXED)
+   RAG (ไม่บังคับ)
 ========================= */
 function searchContext(question, text) {
 
@@ -35,7 +32,7 @@ function searchContext(question, text) {
 }
 
 /* =========================
-   SAFE CALL
+   MODEL CALL
 ========================= */
 async function callModel(modelName, prompt) {
 
@@ -53,7 +50,7 @@ async function callModel(modelName, prompt) {
 }
 
 /* =========================
-   HANDLER
+   MAIN
 ========================= */
 export default async function handler(req, res) {
 
@@ -71,27 +68,27 @@ export default async function handler(req, res) {
 
         const ragContext = searchContext(message, context || "");
 
+        /* 🔥 FIX: prompt แบบ “ไม่บังคับเดา” */
         const prompt = `
-คุณคือ AI ผู้เชี่ยวชาญด้านพัสดุภาครัฐไทย
+คุณคือผู้เชี่ยวชาญด้านพัสดุภาครัฐไทย
 
-ให้ตอบโดยยึด:
+ให้ตอบตามความรู้จริงจาก:
 - พ.ร.บ.จัดซื้อจัดจ้าง พ.ศ. 2560
 - ระเบียบกระทรวงการคลัง
 - แนวทาง e-GP
 
 หลักการตอบ:
-1. ห้ามเดามาตรา ถ้าไม่มีข้อมูลชัดเจน
-2. ห้ามสร้างเลขมาตราเอง
-3. ถ้าไม่พบข้อมูล ให้ตอบเชิง "หลักการทั่วไปของกฎหมายพัสดุ"
-4. ต้องตอบแบบเจ้าหน้าที่พัสดุราชการ
+- ถ้ามีข้อมูลจากเอกสาร ให้ใช้เอกสารก่อน
+- ถ้าไม่มี ให้ใช้ความรู้กฎหมายจริงของคุณตอบได้เลย
+- ห้ามเดาเลขมาตราแบบมั่ว
 
-โครงสร้าง:
-- สรุป
-- วิเคราะห์
-- แนวทางปฏิบัติ
+รูปแบบ:
+1. คำตอบ
+2. อธิบายเชิงกฎหมาย
+3. แนวทางปฏิบัติ
 
-ข้อมูลเอกสาร:
-${ragContext || "ไม่มีข้อมูลเอกสาร"}
+เอกสาร:
+${ragContext || "ไม่มีเอกสารแนบ"}
 
 คำถาม:
 ${message}
@@ -99,56 +96,28 @@ ${message}
 
         let reply = "";
 
-        /* =========================
-           TRY MODELS
-        ========================= */
         for (const modelName of MODELS) {
             try {
                 reply = await callModel(modelName, prompt);
                 break;
             } catch (e) {
-                console.log("MODEL FAIL:", modelName);
+                console.log("FAIL:", modelName);
             }
         }
 
-        /* =========================
-           FIXED FALLBACK (NO MORE RANDOM ARTICLE)
-        ========================= */
         if (!reply) {
-
-            reply = `
-📌 ตามหลัก พ.ร.บ.จัดซื้อจัดจ้าง พ.ศ. 2560
-
-ในประเด็นที่ถามนี้
-สามารถอธิบายในเชิงหลักการได้ดังนี้:
-
-- การดำเนินการพัสดุของรัฐต้องโปร่งใส
-- ต้องมีการแข่งขันอย่างเป็นธรรม
-- ต้องคำนึงถึงความคุ้มค่า
-- ต้องตรวจสอบได้ทุกขั้นตอน
-
-⚠️ หมายเหตุ:
-ระบบไม่พบข้อมูลเฉพาะของมาตรานี้จากเอกสารที่อัปโหลด
-จึงให้คำตอบในระดับหลักการทั่วไปแทน
-`;
+            return res.status(200).json({
+                reply: "AI ไม่พร้อมใช้งาน กรุณาลองใหม่"
+            });
         }
 
         return res.status(200).json({ reply });
 
     } catch (err) {
-
         console.error(err);
 
         return res.status(500).json({
-            reply: `
-⚠️ ระบบขัดข้องชั่วคราว
-
-แต่ตามหลัก พ.ร.บ.จัดซื้อจัดจ้าง 2560
-การดำเนินงานพัสดุยังต้องยึดหลัก:
-- โปร่งใส
-- ตรวจสอบได้
-- คุ้มค่า
-`
+            reply: "ระบบขัดข้อง แต่สามารถลองใหม่ได้"
         });
     }
 }
