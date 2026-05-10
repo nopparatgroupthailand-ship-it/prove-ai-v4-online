@@ -1,309 +1,598 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prove AI v4.4 - ระบบประชุมจังหวัดแพร่ (Final Online)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
- 
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
-        body, html { background-color: #f1f5f9; height: 100%; width: 100%; overflow: hidden; }
-        .app-container {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-    flex-direction: row;
-    overflow: hidden;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Prove AI v5</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:'Sarabun',sans-serif;
 }
 
-.left-panel {
-    width: 70%;
-    min-width: 280px;
-    transition: width 0.3s ease;
+body,html{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#f1f5f9;
 }
 
-.right-panel {
-    width: 30%;
-    min-width: 280px;
-    transition: width 0.3s ease;
+.app-container{
+    display:flex;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
 }
 
-        /* ⬅️ ฝั่งซ้าย 70% (Jitsi / Recorder) */
-        .left-panel { flex: 0 0 70%; padding: 20px; display: flex; flex-direction: column; background-color: #f8fafc; border-right: 2px solid #e2e8f0; }
-        .meeting-box { flex: 1; width: 100%; background: #0f172a; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 2px solid #cbd5e1; position: relative; }
-        iframe { width: 100%; height: 100%; border: none; }
+/* LEFT */
 
-        .control-panel { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn { padding: 12px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; color: white; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-webex { background-color: #10b981; }
-        .btn-jitsi { background-color: #3b82f6; }
-        .btn-file { background-color: #64748b; }
-        .btn-record { background-color: #ef4444; }
-        .btn-stop { background-color: #4b5563; }
-        .rec-status { font-size: 12px; color: #ef4444; font-weight: bold; display: none; margin-left: 10px; animation: blink 1s infinite; }
+.left-panel{
+    width:70%;
+    min-width:280px;
+    display:flex;
+    flex-direction:column;
+    padding:15px;
+    background:#f8fafc;
+    transition:width .2s;
+}
 
-        /* ➡️ ฝั่งขวา 30% (แชท AI) */
-        .right-panel { flex: 0 0 30%; display: flex; flex-direction: column; background-color: #ffffff; box-shadow: -5px 0 20px rgba(0,0,0,0.03); }
-        .chat-header { padding: 20px; background-color: #1a237e; color: white; text-align: center; }
-        .chat-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: #f8f9fa; }
-        .msg { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
-        .msg.ai { align-self: flex-start; background-color: #e8eaf6; color: #1a237e; border-bottom-left-radius: 2px; }
-        .msg.user { align-self: flex-end; background-color: #1a237e; color: white; border-bottom-right-radius: 2px; }
-        
-        .chat-input-zone { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 8px; background: white; }
-        #userInput { flex: 1; padding: 12px; border-radius: 25px; border: 1px solid #ddd; outline: none; }
-        .send-btn { background: #1a237e; color: white; border: none; padding: 0 20px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+.meeting-box{
+    flex:1;
+    background:#0f172a;
+    border-radius:15px;
+    overflow:hidden;
+    margin-bottom:15px;
+    border:2px solid #cbd5e1;
+}
 
-        @keyframes blink { 50% { opacity: 0; } }
-    </style>
+iframe{
+    width:100%;
+    height:100%;
+    border:none;
+}
+
+.control-panel{
+    background:white;
+    padding:15px;
+    border-radius:15px;
+}
+
+.btn-row{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.btn{
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.btn-webex{
+    background:#10b981;
+}
+
+.btn-jitsi{
+    background:#3b82f6;
+}
+
+.btn-file{
+    background:#64748b;
+}
+
+.btn-record{
+    background:#ef4444;
+}
+
+.btn-stop{
+    background:#4b5563;
+}
+
+/* DIVIDER */
+
+#divider{
+    width:8px;
+    background:#cbd5e1;
+    cursor:col-resize;
+}
+
+#divider:hover{
+    background:#3b82f6;
+}
+
+/* RIGHT */
+
+.right-panel{
+    width:30%;
+    min-width:280px;
+    display:flex;
+    flex-direction:column;
+    background:white;
+    transition:width .2s;
+}
+
+.chat-header{
+    background:#1a237e;
+    color:white;
+    padding:20px;
+    text-align:center;
+}
+
+.chat-body{
+    flex:1;
+    overflow-y:auto;
+    padding:15px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:#f8f9fa;
+}
+
+.msg{
+    padding:12px;
+    border-radius:15px;
+    max-width:90%;
+    word-wrap:break-word;
+}
+
+.msg.ai{
+    background:#e8eaf6;
+    color:#1a237e;
+    align-self:flex-start;
+}
+
+.msg.user{
+    background:#1a237e;
+    color:white;
+    align-self:flex-end;
+}
+
+.chat-input-zone{
+    display:flex;
+    gap:10px;
+    padding:15px;
+    background:white;
+    border-top:1px solid #eee;
+}
+
+#userInput{
+    flex:1;
+    padding:12px;
+    border-radius:25px;
+    border:1px solid #ddd;
+}
+
+.send-btn{
+    border:none;
+    border-radius:25px;
+    background:#1a237e;
+    color:white;
+    padding:0 20px;
+    cursor:pointer;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+    .app-container{
+        flex-direction:column;
+    }
+
+    .left-panel{
+        width:100%!important;
+        height:55%;
+    }
+
+    .right-panel{
+        width:100%!important;
+        height:45%;
+    }
+
+    #divider{
+        width:100%;
+        height:6px;
+        cursor:row-resize;
+    }
+
+    .btn-row{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
 </head>
+
 <body>
-    <div class="app-container">
-        <div class="left-panel">
-            <div class="meeting-box" id="screen">
-                <div style="color:white; text-align:center; padding-top:20%;">
-                    <h2>🎥 ระบบประชุมตรวจรับพัสดุ จังหวัดแพร่</h2>
-                    <p style="opacity: 0.6;">กด "เริ่ม Jitsi" เพื่อประชุมในหน้านี้ หรือ "เปิด Webex"</p>
-                </div>
+
+<div class="app-container">
+
+    <!-- LEFT -->
+
+    <div class="left-panel">
+
+        <div class="meeting-box" id="screen">
+
+            <div style="color:white;text-align:center;padding-top:20%;">
+
+                <h2>🎥 ระบบประชุมตรวจรับพัสดุ</h2>
+
+                <p style="opacity:.6;">
+                    กดเริ่ม Jitsi เพื่อประชุม
+                </p>
+
             </div>
 
-            <div class="control-panel">
-                <div class="btn-row">
-                    <button class="btn btn-webex" onclick="window.open(prompt('วางลิงก์ Webex:'), '_blank')">🎥 เปิด Webex</button>
-                    <button class="btn btn-jitsi" id="startJitsi">🔄 เริ่ม Jitsi ในนี้</button>
-                    <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📁 อ่านระเบียบพัสดุ</button>
-                </div>
-                <div style="display:flex; align-items:center; border-top:1px solid #eee; padding-top:15px;">
-                    <button class="btn btn-record" id="recOn">🎙️ เริ่มอัดเสียง</button>
-                    <button class="btn btn-stop" id="recOff" disabled style="margin-left:8px;">⏹️ หยุด</button>
-                    <span class="rec-status" id="blinkRec">● RECORDING</span>
-                    <input type="file" id="fileInput" style="display:none" accept=".pdf,.txt">
-                </div>
-            </div>
         </div>
-<div id="divider"></div>
-        #divider {
-    width: 8px;
-    background: #cbd5e1;
-    cursor: col-resize;
-    transition: background 0.2s;
-}
 
-#divider:hover {
-    background: #3b82f6;
-}
-        <div class="right-panel">
-            <div class="chat-header">
-                <h3>🤖 Prove AI Specialist</h3>
-                <p style="font-size: 10px; opacity: 0.7;">v4.4 Online Support</p>
+        <div class="control-panel">
+
+            <div class="btn-row">
+
+                <button class="btn btn-webex"
+                onclick="window.open(prompt('วางลิงก์ Webex'),'_blank')">
+                    🎥 Webex
+                </button>
+
+                <button class="btn btn-jitsi"
+                id="startJitsi">
+                    🔄 Jitsi
+                </button>
+
+                <button class="btn btn-file"
+                onclick="document.getElementById('fileInput').click()">
+                    📁 เอกสาร
+                </button>
+
             </div>
-            <div class="chat-body" id="chatBox">
-                <div class="msg ai">สวัสดีครับพี่สิริวิชญ์ ระบบออนไลน์พร้อมแล้วครับ ถามระเบียบได้เลยครับ</div>
+
+            <div style="display:flex;gap:10px;align-items:center;">
+
+                <button class="btn btn-record"
+                id="recOn">
+                    🎙️ อัดเสียง
+                </button>
+
+                <button class="btn btn-stop"
+                id="recOff"
+                disabled>
+                    ⏹️ หยุด
+                </button>
+
+                <input
+                type="file"
+                id="fileInput"
+                style="display:none"
+                accept=".txt,.pdf">
+
             </div>
-            <div class="chat-input-zone">
-                <input type="text" id="userInput" placeholder="พิมพ์ข้อความ..." autocomplete="off">
-                <button class="send-btn" id="sendBtn">ส่ง</button>
-            </div>
+
         </div>
+
     </div>
 
-    <script type="module">
-   
+    <!-- DIVIDER -->
 
-        // ✅ API Key เดิมที่ใช้งานได้
+    <div id="divider"></div>
 
+    <!-- RIGHT -->
 
-        let mediaRecorder, audioChunks = [], context = "";
+    <div class="right-panel">
 
-        // 🤖 ระบบ AI
-async function runChat() {
+        <div class="chat-header">
 
-    const input = document.getElementById('userInput');
-    const val = input.value.trim();
+            <h3>🤖 Prove AI</h3>
 
-    if (!val) return;
+            <p style="font-size:12px;opacity:.7;">
+                RAG Procurement Assistant
+            </p>
 
-    addMsg(val, 'user');
+        </div>
 
-    input.value = "";
+        <div class="chat-body" id="chatBox">
 
-    const loading = addMsg(
-        "กำลังวิเคราะห์ระเบียบ... 🧠",
-        'ai'
-    );
+            <div class="msg ai">
+                สวัสดีครับ พร้อมช่วยตรวจระเบียบพัสดุครับ
+            </div>
 
-    try {
+        </div>
 
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+        <div class="chat-input-zone">
+
+            <input
+            type="text"
+            id="userInput"
+            placeholder="ถาม AI...">
+
+            <button
+            class="send-btn"
+            id="sendBtn">
+                ส่ง
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script type="module">
+
+let mediaRecorder;
+let audioChunks = [];
+let context = "";
+
+let isDragging = false;
+
+const leftPanel =
+ document.querySelector('.left-panel');
+
+const rightPanel =
+ document.querySelector('.right-panel');
+
+const divider =
+ document.getElementById('divider');
+
+/* AI */
+
+async function runChat(){
+
+    const input =
+     document.getElementById('userInput');
+
+    const val =
+     input.value.trim();
+
+    if(!val) return;
+
+    addMsg(val,'user');
+
+    input.value='';
+
+    const loading =
+     addMsg('กำลังคิด... 🧠','ai');
+
+    try{
+
+        const response =
+         await fetch('/api/chat',{
+
+            method:'POST',
+
+            headers:{
+                'Content-Type':'application/json'
             },
-            body: JSON.stringify({
-                message: val,
-                context: context
+
+            body:JSON.stringify({
+                message:val,
+                context:context
             })
-        });
 
-        const data = await response.json();
+         });
 
-        console.log(data);
+        const data =
+         await response.json();
 
         loading.remove();
 
         addMsg(
-            data.reply || data.error || 'AI ไม่ตอบ',
+            data.reply ||
+            data.error ||
+            'AI ไม่ตอบ',
             'ai'
         );
 
-    } catch (err) {
+    }catch(err){
 
         console.error(err);
 
         loading.innerText =
-            '🚨 ระบบ AI ขัดข้อง';
+         '🚨 ระบบ AI ขัดข้อง';
+
     }
+
 }
 
-        function addMsg(t, s) {
-            const div = document.createElement('div');
-            div.className = `msg ${s}`;
-            div.innerText = t;
-            document.getElementById('chatBox').appendChild(div);
-            document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
-            return div;
-        }
+function addMsg(text,type){
 
-        // 📹 ระบบ Jitsi (ฝั่งซ้าย)
-        document.getElementById('startJitsi').onclick = () => {
-            const room = "PhraeProcurement-" + Date.now();
-            document.getElementById('screen').innerHTML = `<iframe src="https://meet.jit.si/${room}" allow="camera; microphone; fullscreen; display-capture; autoplay"></iframe>`;
-        };
+    const div =
+     document.createElement('div');
 
-        // 🎙️ ระบบอัดเสียง
-        document.getElementById('recOn').onclick = async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(audioChunks, { type: 'audio/wav' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `บันทึกการประชุม.wav`;
-                link.click(); audioChunks = [];
-            };
-            mediaRecorder.start();
-            document.getElementById('recOn').disabled = true;
-            document.getElementById('recOff').disabled = false;
-            document.getElementById('blinkRec').style.display = 'inline';
-        };
+    div.className =
+     `msg ${type}`;
 
-        document.getElementById('recOff').onclick = () => {
-            mediaRecorder.stop();
-            document.getElementById('recOn').disabled = false;
-            document.getElementById('recOff').disabled = true;
-            document.getElementById('blinkRec').style.display = 'none';
-        };
+    div.innerText =
+     text;
 
-        // 📁 ระบบอ่านไฟล์
-        document.getElementById('fileInput').onchange = e => {
-            const reader = new FileReader();
-            reader.onload = r => { context = r.target.result; addMsg(`AI อ่านข้อมูลจากไฟล์ "${e.target.files[0].name}" แล้วครับ`, 'ai'); };
-            reader.readAsText(e.target.files[0]);
-        };
+    const chatBox =
+     document.getElementById('chatBox');
 
-        document.getElementById('sendBtn').onclick = runChat;
-        document.getElementById('userInput').onkeydown = e => { if(e.key === 'Enter') runChat(); };
+    chatBox.appendChild(div);
 
-const divider = document.getElementById('divider');
+    chatBox.scrollTop =
+     chatBox.scrollHeight;
 
-divider.addEventListener('mousedown', () => {
-    isDragging = true;
+    return div;
+
+}
+
+/* JITSI */
+
+document.getElementById('startJitsi')
+.onclick=()=>{
+
+    const room =
+     'Phrae-' + Date.now();
+
+    document.getElementById('screen')
+    .innerHTML = `
+    <iframe
+    src="https://meet.jit.si/${room}"
+    allow="camera; microphone; fullscreen;">
+    </iframe>
+    `;
+
+};
+
+/* RECORD */
+
+document.getElementById('recOn')
+.onclick = async()=>{
+
+    const stream =
+     await navigator.mediaDevices
+     .getUserMedia({audio:true});
+
+    mediaRecorder =
+     new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable =
+     e=>audioChunks.push(e.data);
+
+    mediaRecorder.onstop = ()=>{
+
+        const blob =
+         new Blob(audioChunks,{
+            type:'audio/wav'
+         });
+
+        const link =
+         document.createElement('a');
+
+        link.href =
+         URL.createObjectURL(blob);
+
+        link.download =
+         'meeting.wav';
+
+        link.click();
+
+        audioChunks=[];
+
+    };
+
+    mediaRecorder.start();
+
+    document.getElementById('recOn')
+    .disabled=true;
+
+    document.getElementById('recOff')
+    .disabled=false;
+
+};
+
+document.getElementById('recOff')
+.onclick=()=>{
+
+    mediaRecorder.stop();
+
+    document.getElementById('recOn')
+    .disabled=false;
+
+    document.getElementById('recOff')
+    .disabled=true;
+
+};
+
+/* FILE */
+
+document.getElementById('fileInput')
+.onchange = e=>{
+
+    const reader =
+     new FileReader();
+
+    reader.onload = r=>{
+
+        context =
+         r.target.result;
+
+        addMsg(
+            'AI อ่านเอกสารแล้ว',
+            'ai'
+        );
+
+    };
+
+    reader.readAsText(
+        e.target.files[0]
+    );
+
+};
+
+/* SEND */
+
+document.getElementById('sendBtn')
+.onclick = runChat;
+
+document.getElementById('userInput')
+.onkeydown = e=>{
+
+    if(e.key==='Enter'){
+        runChat();
+    }
+
+};
+
+/* RESIZE */
+
+divider.addEventListener(
+'mousedown',
+()=>{
+
+    isDragging=true;
+
 });
 
-window.addEventListener('mouseup', () => {
-    isDragging = false;
+window.addEventListener(
+'mouseup',
+()=>{
+
+    isDragging=false;
+
 });
 
-window.addEventListener('mousemove', (e) => {
+window.addEventListener(
+'mousemove',
+e=>{
 
-    if (!isDragging) return;
+    if(!isDragging) return;
 
-    const total = window.innerWidth;
-    const leftWidth = (e.clientX / total) * 100;
+    const total =
+     window.innerWidth;
 
-    if (leftWidth > 20 && leftWidth < 80) {
-        leftPanel.style.width = leftWidth + '%';
-        rightPanel.style.width = (100 - leftWidth) + '%';
+    const leftWidth =
+     (e.clientX/total)*100;
+
+    if(
+        leftWidth>20 &&
+        leftWidth<80
+    ){
+
+        leftPanel.style.width =
+         leftWidth + '%';
+
+        rightPanel.style.width =
+         (100-leftWidth)+'%';
+
     }
 
 });
 
-// กดครั้งเดียว auto slide
+</script>
 
-divider.addEventListener('click', () => {
-
-    autoSlide = !autoSlide;
-
-    if (autoSlide) {
-
-        let dir = 1;
-        let size = 70;
-
-        slideInterval = setInterval(() => {
-
-            size += dir;
-
-            if (size >= 80) dir = -1;
-            if (size <= 40) dir = 1;
-
-            leftPanel.style.width = size + '%';
-            rightPanel.style.width = (100 - size) + '%';
-
-        }, 100);
-
-    } else {
-
-        clearInterval(slideInterval);
-
-    }
-
-});
-
-        
-    </script>
 </body>
 </html>
-@media (max-width: 768px) {
-
-    .app-container {
-        flex-direction: column;
-    }
-
-    .left-panel {
-        width: 100% !important;
-        height: 55%;
-    }
-
-    .right-panel {
-        width: 100% !important;
-        height: 45%;
-    }
-
-    #divider {
-        width: 100%;
-        height: 6px;
-        cursor: row-resize;
-    }
-
-    .btn-row {
-        grid-template-columns: 1fr;
-    }
-
-    .chat-body {
-        font-size: 13px;
-    }
-
-}
