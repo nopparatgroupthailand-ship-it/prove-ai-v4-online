@@ -2,16 +2,13 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/* =========================
-   MODEL POOL (RESILIENT)
-========================= */
 const MODELS = [
     "gemini-1.5-flash",
     "gemini-1.5-pro"
 ];
 
 /* =========================
-   RAG (UNCHANGED BUT SAFE)
+   RAG (STABLE)
 ========================= */
 function searchContext(question, text) {
 
@@ -36,48 +33,64 @@ function searchContext(question, text) {
             return { chunk, score };
         })
         .sort((a, b) => b.score - a.score)
-        .filter(x => x.score > 0)
         .slice(0, 5)
         .map(x => x.chunk)
         .join("\n\n");
 }
 
 /* =========================
-   SAFE GENERATE (CRITICAL FIX)
-   👉 วนจนกว่าจะได้คำตอบจริง
+   SAFE CALL (WITH RETRY)
 ========================= */
-async function generateWithFallback(prompt) {
+async function callModel(modelName, prompt) {
+
+    const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+            temperature: 0.2,
+            topP: 0.8,
+            maxOutputTokens: 2048
+        }
+    });
+
+    const result = await model.generateContent(prompt);
+    return result?.response?.text?.();
+}
+
+/* =========================
+   MAIN ENGINE (ROBUST)
+========================= */
+async function generateAI(prompt) {
 
     let lastError = null;
 
     for (const modelName of MODELS) {
 
-        try {
+        for (let attempt = 0; attempt < 2; attempt++) {
 
-            const model = genAI.getGenerativeModel({
-                model: modelName,
-                generationConfig: {
-                    temperature: 0.2,
-                    topP: 0.8,
-                    maxOutputTokens: 2048
+            try {
+
+                const text = await callModel(modelName, prompt);
+
+                if (text && text.trim().length > 10) {
+                    return text;
                 }
-            });
 
-            const result = await model.generateContent(prompt);
+            } catch (err) {
 
-            const text = result?.response?.text?.();
+                lastError = err;
 
-            if (text && text.trim().length > 10) {
-                return text;
+                console.log(
+                    `FAIL ${modelName} attempt ${attempt + 1}`,
+                    err.message
+                );
+
+                await new Promise(r => setTimeout(r, 300)); // กัน burst
+
             }
-
-        } catch (err) {
-            lastError = err;
-            console.log("MODEL FAIL:", modelName, err.message);
         }
     }
 
-    throw lastError || new Error("All models failed");
+    throw lastError || new Error("ALL MODELS FAILED");
 }
 
 /* =========================
@@ -100,20 +113,18 @@ export default async function handler(req, res) {
         const ragContext = searchContext(message, context || "");
 
         const prompt = `
-คุณคือ AI ผู้เชี่ยวชาญด้านพัสดุภาครัฐไทย (e-GP / TOR / จัดซื้อจัดจ้าง)
+คุณคือ AI ด้านพัสดุภาครัฐไทย
 
-กฎ:
-- ใช้เอกสารก่อน
-- ถ้าไม่มี → ใช้ พ.ร.บ. 2560 + ระเบียบกระทรวงการคลัง
-- ห้ามตอบว่า "ไม่มีข้อมูล" ถ้ายังมีความรู้กฎหมายรองรับ
+ต้องตอบตาม:
+- พ.ร.บ. 2560
+- ระเบียบกระทรวงการคลัง
+- e-GP
 
-รูปแบบ:
-1) สรุป
-2) วิเคราะห์
-3) ข้อเสนอแนะ
+ห้ามตอบว่า "ไม่มีข้อมูล"
+ต้องพยายามวิเคราะห์จากความรู้กฎหมายเสมอ
 
 เอกสาร:
-${ragContext || "ไม่มีข้อมูลจากเอกสาร"}
+${ragContext || "ไม่มีข้อมูลเอกสาร"}
 
 คำถาม:
 ${message}
@@ -122,19 +133,23 @@ ${message}
         let reply;
 
         try {
-            reply = await generateWithFallback(prompt);
+
+            reply = await generateAI(prompt);
+
         } catch (err) {
+
+            console.error("AI HARD FAIL:", err);
+
             return res.status(200).json({
                 reply: `
-⚠️ ระบบ AI ยังไม่พร้อม
+⚠️ ระบบ AI ไม่พร้อมชั่วคราว
 
-สาเหตุ:
-- quota หมด
-- หรือ Gemini ไม่ตอบหลาย model
+แต่ยังสามารถให้คำแนะนำพื้นฐานได้:
 
-แต่ระบบ fallback ยังทำงานได้
+👉 ตาม พ.ร.บ.จัดซื้อจัดจ้าง 2560
+👉 มาตรา 20 เป็นหลักเกี่ยวกับการบริหารสัญญา/ขั้นตอนควบคุมงาน (เชิงหลักการ)
 
-กรุณาลองใหม่อีกครั้ง
+กรุณาลองใหม่อีกครั้งใน 1-2 นาที
 `
             });
         }
