@@ -1,29 +1,54 @@
 import { GoogleGenerativeAI }
 from "@google/generative-ai";
 
+const genAI =
+ new GoogleGenerativeAI(
+   process.env.GEMINI_API_KEY
+ );
+
+const model =
+ genAI.getGenerativeModel({
+   model: "gemini-2.5-flash"
+ });
+
 export default async function handler(
-  req,
-  res
+ req,
+ res
 ) {
 
-  try {
+ try {
 
-    const apiKey =
-      process.env.GEMINI_API_KEY;
+   const { message, context }
+    = req.body;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+   const prompt = `
+ข้อมูลอ้างอิง:
+${context}
+
+คำถาม:
+${message}
+`;
+
+   const result =
+    await model.generateContent(
+      prompt
     );
 
-    const data = await response.json();
+   const text =
+    result.response.text();
 
-    return res.status(200).json(data);
+   return res.status(200).json({
+      reply: text
+   });
 
-  } catch (err) {
+ } catch(err) {
 
-    return res.status(500).json({
+   console.error(err);
+
+   return res.status(500).json({
       error: err.message
-    });
+   });
 
-  }
+ }
+
 }
