@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Prove AI v8</title>
+<title>Prove AI v9</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -52,11 +52,14 @@ html,body{
     position:relative;
 }
 
-iframe{
+iframe,
+video{
     width:100%;
     height:100%;
     border:none;
 }
+
+/* CONTROL */
 
 .control-panel{
     background:white;
@@ -90,7 +93,7 @@ iframe{
 }
 
 .btn-jitsi{
-    background:#3b82f6;
+    background:#2563eb;
 }
 
 .btn-file{
@@ -107,6 +110,23 @@ iframe{
 
 .btn-stop{
     background:#4b5563;
+}
+
+.link-box{
+    margin-top:10px;
+    padding:12px;
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    border-radius:10px;
+    font-size:13px;
+    word-break:break-all;
+    display:none;
+}
+
+.link-box a{
+    color:#1d4ed8;
+    text-decoration:none;
+    font-weight:bold;
 }
 
 /* DIVIDER */
@@ -137,7 +157,7 @@ iframe{
 }
 
 .chat-header{
-    background:#1a237e;
+    background:#1e1b4b;
     color:white;
     padding:20px;
     text-align:center;
@@ -150,7 +170,7 @@ iframe{
     display:flex;
     flex-direction:column;
     gap:10px;
-    background:#f8f9fa;
+    background:#f8fafc;
 }
 
 .msg{
@@ -163,13 +183,13 @@ iframe{
 }
 
 .msg.ai{
-    background:#e8eaf6;
-    color:#1a237e;
+    background:#e0e7ff;
+    color:#1e1b4b;
     align-self:flex-start;
 }
 
 .msg.user{
-    background:#1a237e;
+    background:#1e1b4b;
     color:white;
     align-self:flex-end;
 }
@@ -193,7 +213,7 @@ iframe{
 .send-btn{
     border:none;
     border-radius:25px;
-    background:#1a237e;
+    background:#1e1b4b;
     color:white;
     padding:0 20px;
     cursor:pointer;
@@ -311,6 +331,23 @@ iframe{
                 style="display:none"
                 accept=".txt,.pdf,.doc,.docx">
 
+            </div>
+
+            <!-- LINK BOX -->
+
+            <div class="link-box" id="meetingLinkBox">
+                📡 ลิงก์ประชุม:
+                <br><br>
+
+                <a
+                id="meetingLink"
+                href="#"
+                target="_blank">
+                </a>
+
+                <br><br>
+
+                ✅ copy ลิงก์แล้ว
             </div>
 
             <div class="status" id="dragStatus">
@@ -559,16 +596,33 @@ document.getElementById('startJitsi')
     </iframe>
     `;
 
-    addMsg(
-`📡 เปิดห้องประชุมแล้ว
+    /* SHOW LINK */
 
-${currentMeetingUrl}
+    const linkBox =
+     document.getElementById('meetingLinkBox');
 
-✅ ลิงก์ถูก copy แล้ว`,
-    'ai');
+    const linkEl =
+     document.getElementById('meetingLink');
+
+    linkEl.href =
+     currentMeetingUrl;
+
+    linkEl.innerText =
+     currentMeetingUrl;
+
+    linkBox.style.display =
+     'block';
+
+    /* COPY */
 
     navigator.clipboard
     .writeText(currentMeetingUrl);
+
+    addMsg(
+`📡 เปิดห้องประชุมแล้ว
+
+ส่งลิงก์นี้ให้มือถือเข้าร่วมประชุมได้`,
+    'ai');
 
 };
 
@@ -594,6 +648,8 @@ document.getElementById('shareScreen')
         video.srcObject = stream;
 
         video.autoplay = true;
+
+        video.playsInline = true;
 
         video.style.width = '100%';
         video.style.height = '100%';
