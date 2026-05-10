@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Prove AI v10</title>
+<title>Prove AI v11</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -116,7 +116,7 @@ video{
 .link-box{
     display:none;
     margin-top:15px;
-    padding:15px;
+    padding:14px;
     border-radius:14px;
     background:#eff6ff;
     border:1px solid #bfdbfe;
@@ -124,9 +124,9 @@ video{
 
 .link-box a{
     color:#1d4ed8;
-    word-break:break-all;
-    font-weight:bold;
     text-decoration:none;
+    font-weight:bold;
+    word-break:break-all;
 }
 
 .link-actions{
@@ -151,18 +151,6 @@ video{
 
 .join-btn{
     background:#16a34a;
-}
-
-.qr-box{
-    text-align:center;
-    margin-top:15px;
-}
-
-.qr-box img{
-    width:180px;
-    border-radius:10px;
-    background:white;
-    padding:6px;
 }
 
 /* DIVIDER */
@@ -247,18 +235,23 @@ video{
 
 @media(max-width:768px){
 
+    html,body{
+        overflow:auto;
+    }
+
     .app-container{
         flex-direction:column;
+        height:auto;
     }
 
     .left-panel{
         width:100%;
-        height:55%;
+        height:55vh;
     }
 
     .right-panel{
         width:100%;
-        height:45%;
+        height:45vh;
     }
 
     #divider{
@@ -269,6 +262,10 @@ video{
 
     .btn-row{
         grid-template-columns:1fr 1fr;
+    }
+
+    .chat-body{
+        padding-bottom:80px;
     }
 
 }
@@ -378,20 +375,8 @@ video{
                     <button
                     class="link-btn join-btn"
                     id="joinBtn">
-                        🚀 Join Meeting
+                        🚀 เปิดลิงก์
                     </button>
-
-                </div>
-
-                <div class="qr-box">
-
-                    <img
-                    id="qrImage"
-                    src="">
-
-                    <div style="font-size:12px;color:#64748b;margin-top:6px;">
-                        📱 สแกน QR เพื่อเข้าประชุม
-                    </div>
 
                 </div>
 
@@ -474,6 +459,8 @@ function addMsg(text,type){
     chatBox.scrollTop =
      chatBox.scrollHeight;
 
+    return div;
+
 }
 
 /* AI CHAT */
@@ -492,7 +479,8 @@ async function runChat(){
 
     input.value='';
 
-    addMsg('🧠 AI กำลังคิด...','ai');
+    const loading =
+     addMsg('🧠 AI กำลังคิด...','ai');
 
     try{
 
@@ -524,9 +512,7 @@ async function runChat(){
         const data =
          await response.json();
 
-        document
-        .querySelector('.chat-body')
-        .lastChild.remove();
+        loading.remove();
 
         addMsg(
             data.reply ||
@@ -539,10 +525,8 @@ async function runChat(){
 
         console.error(err);
 
-        addMsg(
-            '🚨 ระบบ AI ขัดข้อง',
-            'ai'
-        );
+        loading.innerText =
+         '🚨 ระบบ AI ขัดข้อง';
 
     }
 
@@ -610,6 +594,8 @@ document.getElementById('startJitsi')
     currentMeetingUrl =
      `https://meet.jit.si/${room}`;
 
+    /* เปิดประชุมในหน้าเดียว */
+
     document.getElementById('screen')
     .innerHTML = `
     <iframe
@@ -618,7 +604,7 @@ document.getElementById('startJitsi')
     </iframe>
     `;
 
-    /* SHOW LINK */
+    /* แสดงลิงก์ */
 
     document.getElementById('meetingLinkBox')
     .style.display = 'block';
@@ -632,28 +618,33 @@ document.getElementById('startJitsi')
     link.innerText =
      currentMeetingUrl;
 
-    /* QR */
-
-    document.getElementById('qrImage')
-    .src =
-    `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(currentMeetingUrl)}`;
-
     /* COPY */
 
     document.getElementById('copyBtn')
     .onclick = async()=>{
 
-        await navigator.clipboard
-        .writeText(currentMeetingUrl);
+        try{
 
-        addMsg(
-            '📋 copy ลิงก์แล้ว',
-            'ai'
-        );
+            await navigator.clipboard
+            .writeText(currentMeetingUrl);
+
+            addMsg(
+                '📋 copy ลิงก์ประชุมแล้ว',
+                'ai'
+            );
+
+        }catch(err){
+
+            addMsg(
+                '❌ copy ไม่สำเร็จ',
+                'ai'
+            );
+
+        }
 
     };
 
-    /* JOIN */
+    /* OPEN */
 
     document.getElementById('joinBtn')
     .onclick = ()=>{
@@ -665,12 +656,17 @@ document.getElementById('startJitsi')
 
     };
 
+    /* AUTO COPY */
+
+    navigator.clipboard
+    .writeText(currentMeetingUrl)
+    .catch(()=>{});
+
     addMsg(
 `📡 เปิดห้องประชุมแล้ว
 
-📱 มือถือเข้า Browser ได้ทันที
-🤖 ถาม AI ได้
-📄 ดูเอกสารร่วมกันได้`,
+✅ ใช้งานในหน้าเดียวกับ AI
+📱 มือถือเข้า Browser ได้ทันที`,
     'ai');
 
 };
@@ -793,18 +789,22 @@ document.getElementById('recOn')
 document.getElementById('recOff')
 .onclick = ()=>{
 
-    mediaRecorder.stop();
+    if(mediaRecorder){
 
-    document.getElementById('recOn')
-    .disabled = false;
+        mediaRecorder.stop();
 
-    document.getElementById('recOff')
-    .disabled = true;
+        document.getElementById('recOn')
+        .disabled = false;
 
-    addMsg(
-        '⏹️ หยุดอัดเสียงแล้ว',
-        'ai'
-    );
+        document.getElementById('recOff')
+        .disabled = true;
+
+        addMsg(
+            '⏹️ หยุดอัดเสียงแล้ว',
+            'ai'
+        );
+
+    }
 
 };
 
