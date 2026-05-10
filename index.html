@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prove AI v4.4 - ระบบประชุมจังหวัดแพร่ (Final Online)</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
-    <script type="importmap">
-      { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
-    </script>
+ 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
         body, html { background-color: #f1f5f9; height: 100%; width: 100%; overflow: hidden; }
@@ -84,33 +82,60 @@
     </div>
 
     <script type="module">
-        import { GoogleGenerativeAI } from "@google/generative-ai";
+   
 
         // ✅ API Key เดิมที่ใช้งานได้
-        const API_KEY = "AIzaSyD-NGKFKHoCZix9rrFMaNing_w2wARAAGc";
-        const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 
         let mediaRecorder, audioChunks = [], context = "";
 
         // 🤖 ระบบ AI
-        async function runChat() {
-            const input = document.getElementById('userInput');
-            const val = input.value.trim();
-            if(!val) return;
+async function runChat() {
 
-            addMsg(val, 'user');
-            input.value = "";
-            const loading = addMsg("กำลังวิเคราะห์ระเบียบ... 🧠", 'ai');
+    const input = document.getElementById('userInput');
+    const val = input.value.trim();
 
-            try {
-                const result = await model.generateContent(`ข้อมูลอ้างอิง: ${context}\nคำถาม: ${val}`);
-                loading.remove();
-                addMsg(result.response.text(), 'ai');
-            } catch (e) {
-                loading.innerText = "🚨 เกิดข้อผิดพลาด (ลองรีเฟรชหรือเช็ค API Key ครับ)";
-            }
-        }
+    if (!val) return;
+
+    addMsg(val, 'user');
+
+    input.value = "";
+
+    const loading = addMsg(
+        "กำลังวิเคราะห์ระเบียบ... 🧠",
+        'ai'
+    );
+
+    try {
+
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: val,
+                context: context
+            })
+        });
+
+        const data = await response.json();
+
+        loading.remove();
+
+        addMsg(
+            data.reply || "AI ไม่สามารถตอบได้",
+            'ai'
+        );
+        
+    } catch (err) {
+
+        console.error(err);
+
+        loading.innerText =
+            "🚨 ระบบ AI ขัดข้อง";
+    }
+}
 
         function addMsg(t, s) {
             const div = document.createElement('div');
