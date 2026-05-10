@@ -1,251 +1,115 @@
-import { GoogleGenerativeAI }
-from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI =
- new GoogleGenerativeAI(
-    process.env.GEMINI_API_KEY
-);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /* =========================
-   MODEL ROTATION
+   MODEL (SAFE LIST)
 ========================= */
-
 const MODELS = [
-
-    "gemini-2.0-flash-lite",
-
-    "gemini-2.0-flash",
-
-    "gemini-2.5-flash-lite",
-
-    "gemini-flash-latest"
-
+    "gemini-1.5-flash",
+    "gemini-1.5-pro"
 ];
 
 /* =========================
-   SIMPLE RAG SEARCH
+   SIMPLE RAG (FIXED)
 ========================= */
+function searchContext(question, text) {
 
-function searchContext(
-    question,
-    text
-){
+    if (!text) return "";
 
-    try{
+    const chunks = text.split(/\n\s*\n/);
 
-        if(!text) return '';
+    const qWords = question
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(w => w.length > 2); // กัน noise
 
-        const chunks =
-         text.split(/\n\s*\n/);
-
-        const keywords =
-         question
-         .toLowerCase()
-         .split(/\s+/)
-         .filter(Boolean);
-
-        const results =
-         chunks.filter(chunk=>{
-
-            return keywords.some(word=>
-
-                chunk
-                .toLowerCase()
-                .includes(word)
-
-            );
-
-         });
-
-        return results
-        .slice(0,5)
-        .join('\n\n');
-
-    }catch(err){
-
-        console.log(err);
-
-        return '';
-
-    }
-
+    return chunks
+        .filter(chunk =>
+            qWords.some(w =>
+                chunk.toLowerCase().includes(w)
+            )
+        )
+        .slice(0, 5)
+        .join("\n\n");
 }
 
 /* =========================
-   API
+   HANDLER
 ========================= */
+export default async function handler(req, res) {
 
-export default async function handler(
-    req,
-    res
-){
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Method not allowed" });
+    }
 
-    try{
+    try {
 
-        /* METHOD */
+        const { message, context } = req.body || {};
 
-        if(req.method !== 'POST'){
-
-            return res.status(405).json({
-                error:'Method not allowed'
-            });
-
+        if (!message) {
+            return res.status(400).json({ error: "No message" });
         }
 
-        /* BODY */
-
-        const {
-            message,
-            context
-        } = req.body || {};
-
-        if(!message){
-
-            return res.status(400).json({
-                error:'No message'
-            });
-
-        }
-
-        /* SAFE CONTEXT */
-
-        const safeContext =
-         (context || '')
-         .slice(0,50000);
-
-        /* RAG */
-
-        const ragContext =
-         searchContext(
-            message,
-            safeContext
-         );
-
-        /* PROMPT */
+        const ragContext = searchContext(message, context || "");
 
         const prompt = `
+คุณคือ AI ผู้เชี่ยวชาญด้านพัสดุภาครัฐไทย
 
-คุณคือ AI ผู้เชี่ยวชาญ
-ด้านระเบียบพัสดุภาครัฐไทย
-
-แนวทางตอบ:
-
-1. ใช้ข้อมูลจากเอกสารที่อัปโหลดก่อน
-
-2. อ้างอิง:
-- พ.ร.บ.จัดซื้อจัดจ้าง 2560
+ต้องตอบอิง:
+- พ.ร.บ.จัดซื้อจัดจ้าง พ.ศ. 2560
 - ระเบียบกระทรวงการคลัง
-- หนังสือเวียนกรมบัญชีกลาง
+- แนวทาง e-GP
 
-3. หากเอกสารไม่มีข้อมูล
-ยังสามารถตอบจากกฎหมาย
-และระเบียบพัสดุได้
+รูปแบบ:
+- สรุป
+- วิเคราะห์
+- ข้อเสนอแนะ
 
-4. ถ้าเป็นความเห็นทั่วไป
-ให้แจ้งว่า:
-"คำตอบนี้เป็นคำแนะนำทั่วไป"
-
-5. ตอบให้เข้าใจง่าย
-แบบเจ้าหน้าที่พัสดุภาครัฐ
+ถ้าไม่มีข้อมูลในเอกสาร:
+ให้ใช้ความรู้กฎหมายไทยตอบได้
 
 ข้อมูลเอกสาร:
-${ragContext || 'ไม่มีข้อมูลจากเอกสาร'}
+${ragContext || "ไม่มีข้อมูลเอกสาร"}
 
 คำถาม:
 ${message}
-
 `;
 
-        let reply = '';
+        let reply = "";
 
-        /* =========================
-           AUTO MODEL SWITCH
-        ========================= */
+        for (const modelName of MODELS) {
 
-        for(
-            const modelName
-            of MODELS
-        ){
+            try {
 
-            try{
+                const model = genAI.getGenerativeModel({
+                    model: modelName
+                });
 
-                console.log(
-                    'TRY MODEL:',
-                    modelName
-                );
+                const result = await model.generateContent(prompt);
 
-                const model =
-                 genAI.getGenerativeModel({
-                    model:modelName
-                 });
+                const text = result?.response?.text?.();
 
-                const result =
-                 await model.generateContent(
-                    prompt
-                 );
+                if (text) {
+                    reply = text;
+                    break;
+                }
 
-                reply =
-                 result.response.text();
-
-                console.log(
-                    'SUCCESS:',
-                    modelName
-                );
-
-                break;
-
-            }catch(err){
-
-                console.log(
-                    'FAILED:',
-                    modelName
-                );
-
-                console.log(
-                    err.message
-                );
-
+            } catch (err) {
+                console.log("MODEL FAIL:", modelName);
             }
-
         }
 
-        /* =========================
-           FALLBACK
-        ========================= */
-
-        if(!reply){
-
-            reply = `
-
-AI ใช้งานเกิน quota ฟรี
-หรือระบบ AI ไม่พร้อมใช้งานชั่วคราว
-
-กรุณารอประมาณ 1 นาที
-แล้วลองใหม่อีกครั้ง
-
-`;
-
+        if (!reply) {
+            reply = "⚠️ AI ไม่พร้อมใช้งาน กรุณาลองใหม่";
         }
 
-        /* RESPONSE */
+        return res.status(200).json({ reply });
 
-        return res.status(200).json({
-            reply
-        });
-
-    }catch(err){
-
+    } catch (err) {
         console.error(err);
-
         return res.status(500).json({
-
-            error:
-             err.message ||
-
-             'AI ERROR'
-
+            error: "SERVER ERROR"
         });
-
     }
-
 }
