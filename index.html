@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Prove AI v12</title>
+<title>Prove AI v13</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
 <style>
-
 *{
     margin:0;
     padding:0;
@@ -31,13 +29,11 @@ html,body{
 }
 
 /* LEFT */
-
 .left-panel{
     width:70%;
     display:flex;
     flex-direction:column;
     padding:12px;
-    background:#f8fafc;
 }
 
 .meeting-box{
@@ -46,14 +42,12 @@ html,body{
     border-radius:16px;
     overflow:hidden;
     border:2px solid #cbd5e1;
-    position:relative;
 }
 
-iframe,
-video{
+iframe{
     width:100%;
     height:100%;
-    border:none;
+    border:0;
 }
 
 .start-screen{
@@ -62,103 +56,7 @@ video{
     padding-top:20%;
 }
 
-.control-panel{
-    margin-top:12px;
-    background:white;
-    padding:14px;
-    border-radius:16px;
-}
-
-.btn-row{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
-}
-
-.btn{
-    border:none;
-    border-radius:12px;
-    padding:12px;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-    transition:.2s;
-}
-
-.btn:hover{
-    opacity:.9;
-}
-
-.btn-jitsi{
-    background:#2563eb;
-}
-
-.btn-webex{
-    background:#10b981;
-}
-
-.btn-file{
-    background:#64748b;
-}
-
-.btn-share{
-    background:#7c3aed;
-}
-
-.btn-record{
-    background:#ef4444;
-}
-
-.btn-stop{
-    background:#4b5563;
-}
-
-.link-box{
-    display:none;
-    margin-top:15px;
-    padding:14px;
-    border-radius:14px;
-    background:#eff6ff;
-    border:1px solid #bfdbfe;
-}
-
-.link-box a{
-    color:#1d4ed8;
-    text-decoration:none;
-    font-weight:bold;
-    word-break:break-all;
-}
-
-.link-actions{
-    display:flex;
-    gap:10px;
-    margin-top:12px;
-    flex-wrap:wrap;
-}
-
-.link-btn{
-    border:none;
-    border-radius:10px;
-    padding:10px 14px;
-    color:white;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.copy-btn{
-    background:#2563eb;
-}
-
-/* DIVIDER */
-
-#divider{
-    width:10px;
-    background:#94a3b8;
-    cursor:col-resize;
-}
-
 /* RIGHT */
-
 .right-panel{
     width:30%;
     display:flex;
@@ -186,14 +84,12 @@ video{
 .msg{
     max-width:90%;
     padding:12px;
-    border-radius:16px;
+    border-radius:14px;
     white-space:pre-wrap;
-    line-height:1.5;
 }
 
 .msg.ai{
     background:#e0e7ff;
-    color:#1e1b4b;
     align-self:flex-start;
 }
 
@@ -206,62 +102,57 @@ video{
 .chat-input-zone{
     display:flex;
     gap:10px;
-    padding:15px;
+    padding:12px;
     border-top:1px solid #eee;
 }
 
 #userInput{
     flex:1;
+    padding:10px;
+    border-radius:20px;
     border:1px solid #ddd;
-    border-radius:30px;
-    padding:12px;
-    outline:none;
 }
 
-.send-btn{
+button{
     border:none;
-    border-radius:30px;
-    padding:0 20px;
-    background:#1e1b4b;
-    color:white;
+    border-radius:20px;
+    padding:10px 16px;
     cursor:pointer;
 }
 
-/* MOBILE */
-
-@media(max-width:768px){
-
-    html,body{
-        overflow:auto;
-    }
-
-    .app-container{
-        flex-direction:column;
-        height:auto;
-    }
-
-    .left-panel{
-        width:100%;
-        height:55vh;
-    }
-
-    .right-panel{
-        width:100%;
-        height:45vh;
-    }
-
-    #divider{
-        width:100%;
-        height:8px;
-        cursor:row-resize;
-    }
-
-    .btn-row{
-        grid-template-columns:1fr 1fr;
-    }
-
+.send-btn{
+    background:#1e1b4b;
+    color:white;
 }
 
+/* CONTROL */
+.control{
+    padding:12px;
+    background:white;
+    border-top:1px solid #ddd;
+    display:flex;
+    gap:10px;
+}
+
+.btn{
+    background:#2563eb;
+    color:white;
+}
+
+.copy{
+    background:#10b981;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+    .app-container{
+        flex-direction:column;
+    }
+    .left-panel,.right-panel{
+        width:100%;
+        height:50%;
+    }
+}
 </style>
 </head>
 
@@ -269,526 +160,104 @@ video{
 
 <div class="app-container">
 
-    <!-- LEFT -->
+<!-- LEFT -->
+<div class="left-panel">
 
-    <div class="left-panel">
-
-        <div class="meeting-box" id="screen">
-
-            <div class="start-screen">
-
-                <h2>🎥 ระบบประชุม Prove AI</h2>
-
-                <p style="opacity:.7;margin-top:10px;">
-                    กดเริ่ม Jitsi เพื่อประชุมออนไลน์
-                </p>
-
-            </div>
-
+    <div class="meeting-box" id="screen">
+        <div class="start-screen">
+            <h2>🎥 Prove AI Meeting</h2>
+            <p>กดเริ่มประชุม Jitsi</p>
         </div>
-
-        <div class="control-panel">
-
-            <div class="btn-row">
-
-                <button
-                class="btn btn-jitsi"
-                id="startJitsi">
-                    🔄 Jitsi
-                </button>
-
-                <button
-                class="btn btn-webex"
-                onclick="openWebex()">
-                    🎥 Webex
-                </button>
-
-                <button
-                class="btn btn-file"
-                onclick="document.getElementById('fileInput').click()">
-                    📁 เอกสาร
-                </button>
-
-                <button
-                class="btn btn-share"
-                id="shareScreen">
-                    🖥️ แชร์จอ
-                </button>
-
-            </div>
-
-            <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
-
-                <button
-                class="btn btn-record"
-                id="recOn">
-                    🎙️ อัดเสียง
-                </button>
-
-                <button
-                class="btn btn-stop"
-                id="recOff"
-                disabled>
-                    ⏹️ หยุด
-                </button>
-
-            </div>
-
-            <input
-            type="file"
-            id="fileInput"
-            style="display:none"
-            accept=".pdf,.txt,.doc,.docx">
-
-            <!-- LINK -->
-
-            <div class="link-box" id="meetingLinkBox">
-
-                <div style="font-weight:bold;">
-                    📡 ลิงก์ประชุม
-                </div>
-
-                <br>
-
-                <a
-                id="meetingLink"
-                href="#"
-                target="_blank">
-                </a>
-
-                <div class="link-actions">
-
-                    <button
-                    class="link-btn copy-btn"
-                    id="copyBtn">
-                        📋 Copy Link
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
     </div>
 
-    <!-- DIVIDER -->
-
-    <div id="divider"></div>
-
-    <!-- RIGHT -->
-
-    <div class="right-panel">
-
-        <div class="chat-header">
-
-            <h3>🤖 Prove AI</h3>
-
-            <div style="font-size:12px;opacity:.7;">
-                AI Procurement Assistant
-            </div>
-
-        </div>
-
-        <div class="chat-body" id="chatBox">
-
-            <div class="msg ai">
-                สวัสดีครับ พร้อมช่วยวิเคราะห์เอกสารและตอบคำถามครับ
-            </div>
-
-        </div>
-
-        <div class="chat-input-zone">
-
-            <input
-            type="text"
-            id="userInput"
-            placeholder="ถาม AI...">
-
-            <button
-            class="send-btn"
-            id="sendBtn">
-                ส่ง
-            </button>
-
-        </div>
-
+    <div class="control">
+        <button class="btn" id="startJitsi">🔄 Start Meeting</button>
+        <button class="copy" id="copyLink">📋 Copy Link</button>
     </div>
 
 </div>
 
-<script type="module">
+<!-- RIGHT -->
+<div class="right-panel">
 
-let uploadedFile = null;
-let mediaRecorder;
-let audioChunks = [];
-let currentMeetingUrl = '';
+    <div class="chat-header">
+        🤖 Prove AI
+    </div>
 
-/* MESSAGE */
+    <div class="chat-body" id="chatBox">
+        <div class="msg ai">พร้อมช่วยวิเคราะห์เอกสารและประชุม</div>
+    </div>
 
+    <div class="chat-input-zone">
+        <input id="userInput" placeholder="ถาม AI...">
+        <button class="send-btn" id="sendBtn">ส่ง</button>
+    </div>
+
+</div>
+
+</div>
+
+<script>
+let currentMeetingUrl = "";
+
+/* CHAT */
 function addMsg(text,type){
-
-    const div =
-     document.createElement('div');
-
-    div.className =
-     `msg ${type}`;
-
-    div.innerText =
-     text;
-
-    const chatBox =
-     document.getElementById('chatBox');
-
-    chatBox.appendChild(div);
-
-    chatBox.scrollTop =
-     chatBox.scrollHeight;
-
-    return div;
-
+    const div = document.createElement("div");
+    div.className = "msg " + type;
+    div.innerText = text;
+    document.getElementById("chatBox").appendChild(div);
+    document.getElementById("chatBox").scrollTop = 999999;
 }
 
-/* AI CHAT */
+/* AI (mock) */
+document.getElementById("sendBtn").onclick = () => {
+    const input = document.getElementById("userInput");
+    if(!input.value) return;
 
-async function runChat(){
+    addMsg(input.value,"user");
 
-    const input =
-     document.getElementById('userInput');
+    addMsg("กำลังวิเคราะห์...", "ai");
 
-    const val =
-     input.value.trim();
+    setTimeout(()=>{
+        addMsg("ระบบ AI พร้อมใช้งาน", "ai");
+    },800);
 
-    if(!val) return;
-
-    addMsg(val,'user');
-
-    input.value='';
-
-    const loading =
-     addMsg('🧠 AI กำลังคิด...','ai');
-
-    try{
-
-        const formData =
-         new FormData();
-
-        formData.append(
-            'message',
-            val
-        );
-
-        if(uploadedFile){
-
-            formData.append(
-                'file',
-                uploadedFile
-            );
-
-        }
-
-        const response =
-         await fetch('/api/chat',{
-
-            method:'POST',
-            body:formData
-
-         });
-
-        const data =
-         await response.json();
-
-        loading.remove();
-
-        addMsg(
-            data.reply ||
-            data.error ||
-            'AI ไม่ตอบ',
-            'ai'
-        );
-
-    }catch(err){
-
-        console.error(err);
-
-        loading.innerText =
-         '🚨 ระบบ AI ขัดข้อง';
-
-    }
-
-}
-
-/* SEND */
-
-document.getElementById('sendBtn')
-.onclick = runChat;
-
-document.getElementById('userInput')
-.onkeydown = e=>{
-
-    if(e.key === 'Enter'){
-        runChat();
-    }
-
-};
-
-/* FILE */
-
-document.getElementById('fileInput')
-.onchange = e=>{
-
-    const file =
-     e.target.files[0];
-
-    if(!file) return;
-
-    uploadedFile = file;
-
-    addMsg(
-        `📁 โหลดเอกสาร "${file.name}" แล้ว`,
-        'ai'
-    );
-
-};
-
-/* WEBEX */
-
-window.openWebex = ()=>{
-
-    const url =
-     prompt('วางลิงก์ Webex');
-
-    if(url){
-
-        document.getElementById('screen')
-        .innerHTML = `
-        <iframe
-        src="${url}"
-        allow="camera; microphone; fullscreen; display-capture">
-        </iframe>
-        `;
-
-        addMsg(
-            '🎥 เปิด Webex แล้ว',
-            'ai'
-        );
-
-    }
-
+    input.value="";
 };
 
 /* JITSI */
+document.getElementById("startJitsi").onclick = () => {
 
-document.getElementById('startJitsi')
-.onclick = ()=>{
+    const room = "ProveAI-" + Date.now();
+    currentMeetingUrl = "https://meet.jit.si/" + room;
 
-    const room =
-     'Phrae-' + Date.now();
-
-    currentMeetingUrl =
-     `https://meet.jit.si/${room}`;
-
-    /* ประชุมในหน้าเดียวกับ AI */
-
-    document.getElementById('screen')
-    .innerHTML = `
-    <iframe
-    src="${currentMeetingUrl}#config.prejoinPageEnabled=false"
-    allow="camera; microphone; fullscreen; display-capture">
-    </iframe>
+    document.getElementById("screen").innerHTML = `
+        <iframe
+            src="${currentMeetingUrl}#config.prejoinPageEnabled=false"
+            allow="camera; microphone; fullscreen; display-capture; autoplay"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        ></iframe>
     `;
 
-    /* แสดงลิงก์ */
-
-    document.getElementById('meetingLinkBox')
-    .style.display = 'block';
-
-    const link =
-     document.getElementById('meetingLink');
-
-    link.href =
-     currentMeetingUrl;
-
-    link.innerText =
-     currentMeetingUrl;
-
-    /* COPY BUTTON */
-
-    document.getElementById('copyBtn')
-    .onclick = async()=>{
-
-        try{
-
-            await navigator.clipboard
-            .writeText(currentMeetingUrl);
-
-            addMsg(
-                '📋 copy ลิงก์ประชุมแล้ว',
-                'ai'
-            );
-
-        }catch(err){
-
-            addMsg(
-                '❌ copy ไม่สำเร็จ',
-                'ai'
-            );
-
-        }
-
-    };
-
-    /* AUTO COPY */
-
-    navigator.clipboard
-    .writeText(currentMeetingUrl)
-    .catch(()=>{});
-
     addMsg(
-`📡 เปิดห้องประชุมแล้ว
+`📡 AI แจ้งกรรมการ
 
-🔗 ส่งลิงก์ให้กรรมการได้ทันที
-📱 มือถือเข้า Browser ได้เลย
-🤖 ใช้งาน AI พร้อมประชุมได้ในหน้าเดียว`,
-    'ai');
+🔗 เข้าประชุม:
+${currentMeetingUrl}`,
+"ai");
 
+    navigator.clipboard.writeText(currentMeetingUrl).catch(()=>{});
 };
 
-/* SCREEN SHARE */
-
-document.getElementById('shareScreen')
-.onclick = async()=>{
-
-    try{
-
-        const stream =
-         await navigator.mediaDevices
-         .getDisplayMedia({
-
-            video:true,
-            audio:true
-
-         });
-
-        const video =
-         document.createElement('video');
-
-        video.srcObject =
-         stream;
-
-        video.autoplay = true;
-
-        video.playsInline = true;
-
-        document.getElementById('screen')
-        .innerHTML = '';
-
-        document.getElementById('screen')
-        .appendChild(video);
-
-        addMsg(
-            '🖥️ เริ่มแชร์หน้าจอแล้ว',
-            'ai'
-        );
-
-    }catch(err){
-
-        addMsg(
-            '❌ แชร์หน้าจอไม่สำเร็จ',
-            'ai'
-        );
-
+/* COPY */
+document.getElementById("copyLink").onclick = async () => {
+    if(!currentMeetingUrl){
+        addMsg("ยังไม่มีลิงก์ประชุม","ai");
+        return;
     }
 
-};
-
-/* RECORD */
-
-document.getElementById('recOn')
-.onclick = async()=>{
-
-    try{
-
-        const stream =
-         await navigator.mediaDevices
-         .getUserMedia({
-            audio:true
-         });
-
-        mediaRecorder =
-         new MediaRecorder(stream);
-
-        mediaRecorder.ondataavailable =
-         e=>audioChunks.push(e.data);
-
-        mediaRecorder.onstop = ()=>{
-
-            const blob =
-             new Blob(audioChunks,{
-                type:'audio/webm'
-             });
-
-            const url =
-             URL.createObjectURL(blob);
-
-            const a =
-             document.createElement('a');
-
-            a.href = url;
-
-            a.download =
-             'meeting-audio.webm';
-
-            a.click();
-
-            audioChunks = [];
-
-        };
-
-        mediaRecorder.start();
-
-        document.getElementById('recOn')
-        .disabled = true;
-
-        document.getElementById('recOff')
-        .disabled = false;
-
-        addMsg(
-            '🎙️ เริ่มอัดเสียงแล้ว',
-            'ai'
-        );
-
-    }catch(err){
-
-        addMsg(
-            '❌ ใช้ไมโครโฟนไม่ได้',
-            'ai'
-        );
-
-    }
-
-};
-
-document.getElementById('recOff')
-.onclick = ()=>{
-
-    if(mediaRecorder){
-
-        mediaRecorder.stop();
-
-        document.getElementById('recOn')
-        .disabled = false;
-
-        document.getElementById('recOff')
-        .disabled = true;
-
-        addMsg(
-            '⏹️ หยุดอัดเสียงแล้ว',
-            'ai'
-        );
-
-    }
-
+    await navigator.clipboard.writeText(currentMeetingUrl);
+    addMsg("📋 copy link แล้ว","ai");
 };
 
 </script>
