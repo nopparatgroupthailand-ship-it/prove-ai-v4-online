@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prove AI v13 FIX FINAL</title>
+<title>Prove AI v13 FINAL STABLE</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -42,6 +42,7 @@ html,body{
     border-radius:16px;
     overflow:hidden;
     border:2px solid #cbd5e1;
+    position:relative;
 }
 
 iframe{
@@ -105,6 +106,7 @@ iframe{
     border:none;
     border-radius:20px;
     padding:10px 16px;
+    cursor:pointer;
 }
 
 /* CONTROL */
@@ -116,10 +118,10 @@ iframe{
     gap:10px;
 }
 
-.btn{background:#2563eb;color:white;border:none;padding:10px 14px;border-radius:10px;}
+.btn{background:#2563eb;color:white;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;}
 .copy{background:#10b981;}
 
-/* MOBILE */
+/* MOBILE FIX */
 @media(max-width:768px){
     .app-container{
         flex-direction:column;
@@ -160,7 +162,7 @@ iframe{
     </div>
 
     <div class="chat-body" id="chatBox">
-        <div class="msg ai">พร้อม AI + ประชุม + RAG</div>
+        <div class="msg ai">พร้อม AI + RAG + ประชุม</div>
     </div>
 
     <div class="chat-input-zone">
@@ -174,7 +176,7 @@ iframe{
 
 <script>
 
-let currentMeetingUrl="";
+let currentMeetingUrl = "";
 
 /* CHAT */
 function addMsg(text,type){
@@ -185,26 +187,27 @@ function addMsg(text,type){
     chatBox.scrollTop=999999;
 }
 
-/* AI HOOK (RAG ของคุณต่อได้ตรงนี้) */
+/* AI HOOK (RAG เดิมของคุณต่อได้ตรงนี้) */
 sendBtn.onclick=()=>{
     if(!userInput.value)return;
 
     addMsg(userInput.value,"user");
 
-    addMsg("🧠 AI (RAG ENGINE ACTIVE)", "ai");
+    // 🔥 จุดต่อ RAG ENGINE ของคุณ
+    addMsg("🧠 AI วิเคราะห์ (RAG ENGINE ACTIVE)", "ai");
 
     userInput.value="";
 };
 
-/* JITSI FIX (MIC WORK MOBILE) */
-startJitsi.onclick=()=>{
+/* JITSI FIX (MOBILE MIC WORKING) */
+startJitsi.onclick = () => {
 
-    const room="ProveAI-"+Date.now();
-    currentMeetingUrl="https://meet.jit.si/"+room;
+    const room = "ProveAI-" + Date.now();
+    currentMeetingUrl = "https://meet.jit.si/" + room;
 
-    screen.innerHTML=`
+    screen.innerHTML = `
     <iframe
-        src="${currentMeetingUrl}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false"
+        src="${currentMeetingUrl}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false"
         allow="camera; microphone; fullscreen; display-capture; autoplay"
     ></iframe>
     `;
@@ -213,21 +216,22 @@ startJitsi.onclick=()=>{
 `📡 AI ส่งลิงก์ประชุม
 
 ${currentMeetingUrl}
-(กด copy ด้านล่าง)`,
+(กด copy ได้เลย)`,
 "ai");
 
     navigator.clipboard.writeText(currentMeetingUrl).catch(()=>{});
 };
 
 /* COPY */
-copyLink.onclick=async()=>{
+copyLink.onclick = async () => {
+
     if(!currentMeetingUrl){
-        addMsg("ยังไม่มีลิงก์","ai");
+        addMsg("ยังไม่มีลิงก์ประชุม","ai");
         return;
     }
 
     await navigator.clipboard.writeText(currentMeetingUrl);
-    addMsg("📋 copied","ai");
+    addMsg("📋 copied link แล้ว","ai");
 };
 
 </script>
