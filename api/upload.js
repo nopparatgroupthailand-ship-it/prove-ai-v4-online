@@ -1,34 +1,12 @@
+import fs from 'fs';
 import pdf from 'pdf-parse';
+import formidable from 'formidable';
 
 export const config = {
     api: {
         bodyParser: false
     }
 };
-
-async function readFile(req){
-
-    return new Promise((resolve,reject)=>{
-
-        const chunks = [];
-
-        req.on('data',chunk=>{
-            chunks.push(chunk);
-        });
-
-        req.on('end',()=>{
-
-            resolve(
-                Buffer.concat(chunks)
-            );
-
-        });
-
-        req.on('error',reject);
-
-    });
-
-}
 
 export default async function handler(
     req,
@@ -37,30 +15,39 @@ export default async function handler(
 
     try{
 
-        const buffer =
-         await readFile(req);
+        const form =
+         formidable({});
 
-        const text =
-         buffer.toString();
+        const [fields, files] =
+         await form.parse(req);
+
+        const file =
+         files.file?.[0];
+
+        if(!file){
+
+            return res.status(400).json({
+                error:'ไม่พบไฟล์'
+            });
+
+        }
+
+        const buffer =
+         fs.readFileSync(
+            file.filepath
+         );
 
         let extracted = '';
 
         /* PDF */
 
         if(
-            text.includes('application/pdf')
+            file.mimetype ===
+            'application/pdf'
         ){
 
-            const start =
-             buffer.indexOf(
-              Buffer.from('%PDF')
-             );
-
-            const pdfBuffer =
-             buffer.slice(start);
-
             const data =
-             await pdf(pdfBuffer);
+             await pdf(buffer);
 
             extracted =
              data.text;
@@ -71,12 +58,16 @@ export default async function handler(
 
         else{
 
-            extracted = text;
+            extracted =
+             buffer.toString('utf8');
 
         }
 
         return res.status(200).json({
-            text: extracted.slice(0,200000)
+
+            text:
+             extracted.slice(0,200000)
+
         });
 
     }catch(err){
@@ -84,7 +75,10 @@ export default async function handler(
         console.error(err);
 
         return res.status(500).json({
-            error: err.message
+
+            error:
+             err.message
+
         });
 
     }
