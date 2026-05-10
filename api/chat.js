@@ -15,7 +15,7 @@ export default async function handler(req, res) {
             message,
             context
         } = req.body;
-
+console.log("KEY:", process.env.GEMINI_API_KEY);
         const genAI =
             new GoogleGenerativeAI(
                 process.env.GEMINI_API_KEY
