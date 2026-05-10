@@ -1,64 +1,53 @@
 import { GoogleGenerativeAI }
 from "@google/generative-ai";
 
-import fs from "fs";
-import path from "path";
-
 const genAI =
  new GoogleGenerativeAI(
-   process.env.GEMINI_API_KEY
- );
+    process.env.GEMINI_API_KEY
+);
 
 const model =
  genAI.getGenerativeModel({
-   model: "gemini-2.5-flash"
- });
+    model: "gemini-2.0-flash"
+});
 
-function searchContext(question) {
+/* SIMPLE RAG SEARCH */
 
-    try {
+function searchContext(
+    question,
+    text
+){
 
-        const filePath =
-         path.join(
-            process.cwd(),
-            "data",
-            "knowledge.txt"
-         );
+    try{
 
-        const text =
-         fs.readFileSync(
-            filePath,
-            "utf8"
-         );
+        if(!text) return '';
 
-        // แบ่ง paragraph
         const chunks =
          text.split(/\n\s*\n/);
 
-        // ค้น keyword
-        const results =
-         chunks.filter(chunk => {
+        const keywords =
+         question
+         .toLowerCase()
+         .split(/\s+/);
 
-            return question
+        const results =
+         chunks.filter(chunk=>{
+
+            return keywords.some(word=>
+                chunk
                 .toLowerCase()
-                .split(/\s+/)
-                .some(word =>
-                    chunk
-                      .toLowerCase()
-                      .includes(word)
-                );
+                .includes(word)
+            );
 
          });
 
         return results
-            .slice(0, 5)
-            .join("\n\n");
+        .slice(0,5)
+        .join('\n\n');
 
-    } catch(err) {
+    }catch(err){
 
-        console.error(err);
-
-        return "";
+        return '';
 
     }
 
@@ -67,30 +56,44 @@ function searchContext(question) {
 export default async function handler(
     req,
     res
-) {
+){
 
-    try {
+    try{
 
         const {
-            message
+            message,
+            context
         } = req.body;
 
-        const context =
-         searchContext(message);
+        const ragContext =
+         searchContext(
+            message,
+            context
+         );
 
- const prompt = `
-คุณคือผู้เชี่ยวชาญระเบียบพัสดุภาครัฐไทย
+        const prompt = `
+คุณคือ AI ผู้เชี่ยวชาญ
+ด้านระเบียบพัสดุภาครัฐไทย
 
-ให้ตอบจากข้อมูลอ้างอิงก่อนเสมอ
+แนวทางตอบ:
 
-ถ้าไม่มีข้อมูลในเอกสาร
-สามารถตอบทั่วไปได้
-แต่ต้องแจ้งว่า:
+1. ให้ใช้อ้างอิงจาก:
+- พระราชบัญญัติจัดซื้อจัดจ้างฯ พ.ศ.2560
+- ระเบียบกระทรวงการคลัง
+- หนังสือเวียนที่เกี่ยวข้อง
 
-"คำตอบนี้ไม่ได้อ้างอิงจากเอกสาร"
+2. ถ้ามีข้อมูลจากเอกสารที่อัปโหลด
+ให้ใช้อ้างอิงเอกสารนั้นเป็นหลัก
 
-ข้อมูลอ้างอิง:
-${context}
+3. ถ้าไม่มีข้อมูลในเอกสาร
+สามารถใช้ความรู้ทั่วไปด้านพัสดุภาครัฐตอบได้
+
+4. ถ้าเป็นคำตอบทั่วไป
+ให้แจ้งว่า:
+"คำตอบนี้เป็นคำแนะนำทั่วไป"
+
+ข้อมูลจากเอกสาร:
+${ragContext || 'ไม่มีข้อมูลเอกสาร'}
 
 คำถาม:
 ${message}
@@ -101,14 +104,14 @@ ${message}
             prompt
          );
 
-        const text =
+        const reply =
          result.response.text();
 
         return res.status(200).json({
-            reply: text
+            reply
         });
 
-    } catch(err) {
+    }catch(err){
 
         console.error(err);
 
