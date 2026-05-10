@@ -6,7 +6,9 @@ const genAI =
     process.env.GEMINI_API_KEY
 );
 
-/* MODEL ROTATION */
+/* =========================
+   MODEL ROTATION
+========================= */
 
 const MODELS = [
 
@@ -20,7 +22,9 @@ const MODELS = [
 
 ];
 
-/* SIMPLE RAG */
+/* =========================
+   SIMPLE RAG SEARCH
+========================= */
 
 function searchContext(
     question,
@@ -37,15 +41,18 @@ function searchContext(
         const keywords =
          question
          .toLowerCase()
-         .split(/\s+/);
+         .split(/\s+/)
+         .filter(Boolean);
 
         const results =
          chunks.filter(chunk=>{
 
             return keywords.some(word=>
+
                 chunk
                 .toLowerCase()
                 .includes(word)
+
             );
 
          });
@@ -56,11 +63,17 @@ function searchContext(
 
     }catch(err){
 
+        console.log(err);
+
         return '';
 
     }
 
 }
+
+/* =========================
+   API
+========================= */
 
 export default async function handler(
     req,
@@ -69,43 +82,85 @@ export default async function handler(
 
     try{
 
+        /* METHOD */
+
+        if(req.method !== 'POST'){
+
+            return res.status(405).json({
+                error:'Method not allowed'
+            });
+
+        }
+
+        /* BODY */
+
         const {
             message,
             context
-        } = req.body;
+        } = req.body || {};
+
+        if(!message){
+
+            return res.status(400).json({
+                error:'No message'
+            });
+
+        }
+
+        /* SAFE CONTEXT */
+
+        const safeContext =
+         (context || '')
+         .slice(0,50000);
+
+        /* RAG */
 
         const ragContext =
          searchContext(
             message,
-            context
+            safeContext
          );
 
+        /* PROMPT */
+
         const prompt = `
+
 คุณคือ AI ผู้เชี่ยวชาญ
 ด้านระเบียบพัสดุภาครัฐไทย
 
 แนวทางตอบ:
 
-1. ใช้ข้อมูลจากเอกสารก่อน
+1. ใช้ข้อมูลจากเอกสารที่อัปโหลดก่อน
+
 2. อ้างอิง:
 - พ.ร.บ.จัดซื้อจัดจ้าง 2560
 - ระเบียบกระทรวงการคลัง
-- หนังสือเวียน
+- หนังสือเวียนกรมบัญชีกลาง
 
-3. ถ้าเป็นความเห็นทั่วไป
+3. หากเอกสารไม่มีข้อมูล
+ยังสามารถตอบจากกฎหมาย
+และระเบียบพัสดุได้
+
+4. ถ้าเป็นความเห็นทั่วไป
 ให้แจ้งว่า:
 "คำตอบนี้เป็นคำแนะนำทั่วไป"
 
+5. ตอบให้เข้าใจง่าย
+แบบเจ้าหน้าที่พัสดุภาครัฐ
+
 ข้อมูลเอกสาร:
-${ragContext || 'ไม่มี'}
+${ragContext || 'ไม่มีข้อมูลจากเอกสาร'}
 
 คำถาม:
 ${message}
+
 `;
 
         let reply = '';
 
-        /* AUTO MODEL SWITCH */
+        /* =========================
+           AUTO MODEL SWITCH
+        ========================= */
 
         for(
             const modelName
@@ -146,22 +201,33 @@ ${message}
                     modelName
                 );
 
+                console.log(
+                    err.message
+                );
+
             }
 
         }
 
-        /* FALLBACK */
+        /* =========================
+           FALLBACK
+        ========================= */
 
         if(!reply){
 
             reply = `
-AI ใช้งานเกิน quota ฟรีชั่วคราว
+
+AI ใช้งานเกิน quota ฟรี
+หรือระบบ AI ไม่พร้อมใช้งานชั่วคราว
 
 กรุณารอประมาณ 1 นาที
 แล้วลองใหม่อีกครั้ง
+
 `;
 
         }
+
+        /* RESPONSE */
 
         return res.status(200).json({
             reply
@@ -172,7 +238,12 @@ AI ใช้งานเกิน quota ฟรีชั่วคราว
         console.error(err);
 
         return res.status(500).json({
-            error: err.message
+
+            error:
+             err.message ||
+
+             'AI ERROR'
+
         });
 
     }
