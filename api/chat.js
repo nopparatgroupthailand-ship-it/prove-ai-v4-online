@@ -4,11 +4,11 @@ import { GoogleGenerativeAI }
         const results = chunks.filter(chunk => {
 
             return question
-                .toLowerCase()
-                .split(' ')
-                .some(word =>
-                    chunk.toLowerCase().includes(word)
-                );
+    .toLowerCase()
+    .split(/\s+/)
+    .some(word =>
+        chunk.toLowerCase().includes(word)
+    );
 
         });
 
