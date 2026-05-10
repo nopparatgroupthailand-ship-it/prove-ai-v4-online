@@ -8,139 +8,137 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Sarabun',sans-serif;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Sarabun',sans-serif;}
 
 html,body{
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#f1f5f9;
+width:100%;
+height:100%;
+overflow:hidden;
+background:#f1f5f9;
 }
 
-/* LAYOUT */
 .app{
-    display:flex;
-    width:100%;
-    height:100%;
+display:flex;
+width:100%;
+height:100%;
 }
 
 /* LEFT */
 .left{
-    width:70%;
-    display:flex;
-    flex-direction:column;
-    padding:10px;
+width:70%;
+display:flex;
+flex-direction:column;
+padding:10px;
 }
 
 .meeting{
-    flex:1;
-    background:#0f172a;
-    border-radius:14px;
-    overflow:hidden;
-    border:2px solid #cbd5e1;
+flex:1;
+background:#0f172a;
+border-radius:16px;
+overflow:hidden;
+border:2px solid #cbd5e1;
+position:relative;
 }
 
-iframe{
-    width:100%;
-    height:100%;
-    border:0;
+iframe,video{
+width:100%;
+height:100%;
+border:0;
 }
 
-/* RESIZER (ลากปรับสัดส่วนกลับมา) */
+/* CONTROL */
+.control{
+display:flex;
+gap:10px;
+padding:10px;
+background:white;
+border-top:1px solid #ddd;
+}
+
+.btn{
+padding:10px 14px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+color:white;
+}
+
+.blue{background:#2563eb;}
+.green{background:#10b981;}
+.gray{background:#64748b;}
+
+/* RESIZE BAR */
 .resizer{
-    width:8px;
-    cursor:col-resize;
-    background:#94a3b8;
+width:8px;
+cursor:col-resize;
+background:#94a3b8;
 }
 
 /* RIGHT */
 .right{
-    width:30%;
-    display:flex;
-    flex-direction:column;
-    background:#fff;
+width:30%;
+display:flex;
+flex-direction:column;
+background:white;
 }
 
 .header{
-    background:#1e1b4b;
-    color:white;
-    padding:16px;
-    text-align:center;
+background:#1e1b4b;
+color:white;
+text-align:center;
+padding:15px;
 }
 
 .chat{
-    flex:1;
-    overflow:auto;
-    padding:12px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    background:#f8fafc;
+flex:1;
+overflow:auto;
+padding:10px;
+background:#f8fafc;
+display:flex;
+flex-direction:column;
+gap:10px;
 }
 
 .msg{
-    padding:10px;
-    border-radius:12px;
-    max-width:90%;
-    white-space:pre-wrap;
+padding:10px;
+border-radius:12px;
+max-width:90%;
+white-space:pre-wrap;
 }
 
-.ai{background:#e0e7ff;align-self:flex-start;}
-.user{background:#1e1b4b;color:#fff;align-self:flex-end;}
+.ai{background:#e0e7ff;}
+.user{background:#1e1b4b;color:white;align-self:flex-end;}
 
-.inputBox{
-    display:flex;
-    gap:8px;
-    padding:10px;
-    border-top:1px solid #ddd;
+.input{
+display:flex;
+gap:10px;
+padding:10px;
+border-top:1px solid #ddd;
 }
 
 input{
-    flex:1;
-    padding:10px;
-    border-radius:20px;
-    border:1px solid #ddd;
+flex:1;
+padding:10px;
+border-radius:20px;
+border:1px solid #ddd;
 }
 
-button{
-    padding:10px 14px;
-    border:none;
-    border-radius:20px;
-    cursor:pointer;
+.send{
+background:#1e1b4b;
+color:white;
+border:none;
+border-radius:20px;
+padding:10px 15px;
+cursor:pointer;
 }
 
-.send{background:#1e1b4b;color:white;}
-
-/* CONTROL BAR */
-.control{
-    display:flex;
-    gap:8px;
-    padding:10px;
-    background:#fff;
-    border-top:1px solid #ddd;
+.linkbox{
+display:none;
+padding:10px;
+background:#eff6ff;
+border-top:1px solid #bfdbfe;
 }
 
-.btn{background:#2563eb;color:white;}
-.webx{background:#10b981;color:white;}
-.copy{background:#059669;color:white;}
-
-/* LINK */
-.linkBox{
-    display:none;
-    padding:10px;
-    background:#eff6ff;
-    border-top:1px solid #bfdbfe;
-}
-
-.linkBox a{
-    word-break:break-all;
-    color:#1d4ed8;
-}
 </style>
 </head>
 
@@ -148,149 +146,140 @@ button{
 
 <div class="app">
 
-    <!-- LEFT -->
-    <div class="left">
+<!-- LEFT -->
+<div class="left">
 
-        <div class="meeting" id="screen">
-            <div style="color:white;text-align:center;padding-top:20%">
-                🎥 Prove AI Meeting
-            </div>
-        </div>
+<div class="meeting" id="screen">
+<div style="color:white;text-align:center;padding-top:20%">🎥 Ready</div>
+</div>
 
-        <div class="control">
-            <button class="btn" id="start">🔄 Jitsi</button>
-            <button class="webx" id="webx">🎥 Webex</button>
-            <button class="copy" id="fileBtn">📁 File</button>
-        </div>
+<div class="control">
+<button class="btn blue" id="jitsiBtn">Jitsi</button>
+<button class="btn green" id="webexBtn">Webex</button>
+<button class="btn gray" id="fileBtn">Upload</button>
+<input type="file" id="fileInput" hidden>
+</div>
 
-        <input type="file" id="fileInput" hidden>
+<div class="linkbox" id="linkbox">
+<div id="linktext"></div>
+<button onclick="copyLink()">Copy</button>
+</div>
 
-        <div class="linkBox" id="linkBox">
-            🔗 Link: <br>
-            <a id="link"></a>
-            <br><br>
-            <button class="copy" id="copy">Copy</button>
-        </div>
+</div>
 
-    </div>
+<div class="resizer" id="drag"></div>
 
-    <div class="resizer" id="drag"></div>
+<!-- RIGHT -->
+<div class="right">
 
-    <!-- RIGHT -->
-    <div class="right">
+<div class="header">🤖 Prove AI</div>
 
-        <div class="header">🤖 Prove AI</div>
+<div class="chat" id="chat"></div>
 
-        <div class="chat" id="chat">
-            <div class="msg ai">ระบบพร้อมใช้งาน (Stable Mode)</div>
-        </div>
+<div class="input">
+<input id="msg" placeholder="ถาม AI..." />
+<button class="send" id="send">ส่ง</button>
+</div>
 
-        <div class="inputBox">
-            <input id="txt" placeholder="ถาม AI... (Enter ได้)">
-            <button class="send" id="send">ส่ง</button>
-        </div>
-
-    </div>
+</div>
 
 </div>
 
 <script>
 let url="";
+let contextText="";
 
-/* CHAT (กันพัง + fallback RAG) */
+/* CHAT */
 function add(t,c){
-    let d=document.createElement("div");
-    d.className="msg "+c;
-    d.innerText=t;
-    chat.appendChild(d);
-    chat.scrollTop=999999;
+const d=document.createElement("div");
+d.className="msg "+c;
+d.innerText=t;
+chat.appendChild(d);
+chat.scrollTop=999999;
 }
 
-/* ENTER SEND */
-txt.addEventListener("keydown",(e)=>{
-    if(e.key==="Enter") send.click();
+/* SEND */
+send.onclick=async()=>{
+if(!msg.value)return;
+
+add(msg.value,"user");
+
+const res=await fetch("/api/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+message:msg.value,
+context:contextText
+})
 });
 
-/* AI SAFE (ไม่พังถ้า backend ล่ม) */
-send.onclick=async()=>{
-    if(!txt.value)return;
+const data=await res.json();
 
-    add(txt.value,"user");
-    let q=txt.value;
-    txt.value="";
+add(data.reply||"no response","ai");
 
-    add("🧠 กำลังวิเคราะห์ (RAG + RULE ENGINE)...","ai");
-
-    try{
-        let r=await fetch("/api/chat",{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({message:q})
-        });
-
-        let d=await r.json();
-        add(d.reply || "ไม่มีข้อมูลจากระบบ","ai");
-
-    }catch(e){
-        add("⚠️ fallback: ใช้กฎหมายพื้นฐาน / พรบ.พัสดุ 2560","ai");
-    }
+msg.value="";
 };
 
-/* JITSI (STABLE iframe) */
-start.onclick=()=>{
-    let room="PROVE-"+Date.now();
-    url="https://meet.jit.si/"+room;
+/* ENTER FIX */
+msg.addEventListener("keydown",(e)=>{
+if(e.key==="Enter")send.onclick();
+});
 
-    screen.innerHTML=`
-        <iframe
-            src="${url}#config.prejoinPageEnabled=false"
-            allow="camera; microphone; fullscreen; display-capture">
-        </iframe>
-    `;
+/* JITSI FIX */
+jitsiBtn.onclick=()=>{
+const room="AI-"+Date.now();
+url="https://meet.jit.si/"+room;
 
-    linkBox.style.display="block";
-    link.innerText=url;
-    link.href=url;
+screen.innerHTML=`
+<iframe src="${url}#config.prejoinPageEnabled=false"
+allow="camera; microphone; fullscreen; display-capture"></iframe>
+`;
 
-    add("📡 เปิดประชุมแล้ว: "+url,"ai");
+linkbox.style.display="block";
+linktext.innerText=url;
+
+add("📡 เปิดประชุมแล้ว:\n"+url,"ai");
 };
 
 /* COPY */
-copy.onclick=()=>{
-    navigator.clipboard.writeText(url||"");
-    add("📋 copied","ai");
-};
+function copyLink(){
+navigator.clipboard.writeText(url);
+}
 
 /* WEBEX */
-webx.onclick=()=>{
-    let w=prompt("ใส่ Webex link");
-    if(w){
-        screen.innerHTML=`<iframe src="${w}"></iframe>`;
-        add("🎥 Webex opened","ai");
-    }
+webexBtn.onclick=()=>{
+const w=prompt("Webex link");
+if(!w)return;
+screen.innerHTML=`<iframe src="${w}"></iframe>`;
 };
 
-/* FILE */
+/* FILE UPLOAD */
 fileBtn.onclick=()=>fileInput.click();
-fileInput.onchange=(e)=>{
-    add("📁 file: "+e.target.files[0].name,"ai");
+
+fileInput.onchange=async(e)=>{
+const f=e.target.files[0];
+const fd=new FormData();
+fd.append("file",f);
+
+const r=await fetch("/api/upload",{method:"POST",body:fd});
+const d=await r.json();
+
+contextText=d.text;
+
+add("📁 โหลดเอกสารแล้ว (RAG ready)","ai");
 };
 
-/* DRAG SPLITTER (กลับมาแล้ว) */
-let drag=document.getElementById("drag");
-let left=document.querySelector(".left");
-
-drag.onmousedown=()=>{
-    document.onmousemove=(e)=>{
-        let w=(e.clientX/window.innerWidth)*100;
-        if(w<20||w>80)return;
-        left.style.width=w+"%";
-        document.querySelector(".right").style.width=(100-w)+"%";
-    };
+/* DRAG */
+let isDown=false;
+drag.onmousedown=()=>isDown=true;
+document.onmouseup=()=>isDown=false;
+document.onmousemove=(e)=>{
+if(!isDown)return;
+let w=e.clientX/window.innerWidth*100;
+if(w<20||w>80)return;
+document.querySelector(".left").style.width=w+"%";
+document.querySelector(".right").style.width=(100-w)+"%";
 };
-
-document.onmouseup=()=>document.onmousemove=null;
-
 </script>
 
 </body>
