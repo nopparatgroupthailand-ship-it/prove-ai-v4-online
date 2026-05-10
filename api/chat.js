@@ -1,55 +1,29 @@
 import { GoogleGenerativeAI }
 from "@google/generative-ai";
 
-export default async function handler(req, res) {
+export default async function handler(
+  req,
+  res
+) {
 
-    if (req.method !== 'POST') {
-        return res.status(405).json({
-            error: 'Method not allowed'
-        });
-    }
+  try {
 
-    try {
+    const apiKey =
+      process.env.GEMINI_API_KEY;
 
-        const {
-            message,
-            context
-        } = req.body;
-console.log("KEY:", process.env.GEMINI_API_KEY);
-        const genAI =
-            new GoogleGenerativeAI(
-                process.env.GEMINI_API_KEY
-            );
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+    );
 
-        const model =
-            genAI.getGenerativeModel({
-                model: "gemini-1.5-pro"
-            });
+    const data = await response.json();
 
-        const prompt = `
-ข้อมูลอ้างอิง:
-${context || "ไม่มี"}
+    return res.status(200).json(data);
 
-คำถาม:
-${message}
-`;
+  } catch (err) {
 
-        const result =
-            await model.generateContent(prompt);
+    return res.status(500).json({
+      error: err.message
+    });
 
-        const text =
-            result.response.text();
-
-        return res.status(200).json({
-            reply: text
-        });
-
-    } catch (err) {
-
-        console.error(err);
-
-        return res.status(500).json({
-            error: err.message
-        });
-    }
+  }
 }
