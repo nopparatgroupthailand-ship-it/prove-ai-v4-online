@@ -577,6 +577,7 @@ function openWebex(){
 
 }
 
+```javascript
 /* JITSI */
 
 document.getElementById('startJitsi')
@@ -588,271 +589,156 @@ document.getElementById('startJitsi')
     currentMeetingUrl =
      `https://meet.jit.si/${room}`;
 
+    /* OPEN INSIDE NOTEBOOK */
+
     document.getElementById('screen')
     .innerHTML = `
     <iframe
-    src="${currentMeetingUrl}"
-    allow="camera; microphone; fullscreen; display-capture">
+    src="${currentMeetingUrl}#config.prejoinPageEnabled=false"
+    allow="camera; microphone; fullscreen; display-capture"
+    style="width:100%;height:100%;border:none;">
     </iframe>
     `;
 
-    /* SHOW LINK */
+    /* LINK BOX */
 
     const linkBox =
      document.getElementById('meetingLinkBox');
 
-    const linkEl =
-     document.getElementById('meetingLink');
-
-    linkEl.href =
-     currentMeetingUrl;
-
-    linkEl.innerText =
-     currentMeetingUrl;
-
     linkBox.style.display =
      'block';
 
-    /* COPY */
+    linkBox.innerHTML = `
+
+    <div style="font-weight:bold;margin-bottom:10px;">
+    📡 ห้องประชุมพร้อมใช้งาน
+    </div>
+
+    <a
+    href="${currentMeetingUrl}"
+    target="_blank"
+    style="
+        color:#2563eb;
+        word-break:break-all;
+        font-weight:bold;
+    ">
+    ${currentMeetingUrl}
+    </a>
+
+    <div style="
+        display:flex;
+        gap:10px;
+        margin-top:15px;
+        flex-wrap:wrap;
+    ">
+
+        <button
+        id="copyMeetingBtn"
+        style="
+            padding:10px 14px;
+            border:none;
+            border-radius:10px;
+            background:#2563eb;
+            color:white;
+            cursor:pointer;
+            font-weight:bold;
+        ">
+        📋 Copy Link
+        </button>
+
+        <button
+        id="openMeetingBtn"
+        style="
+            padding:10px 14px;
+            border:none;
+            border-radius:10px;
+            background:#16a34a;
+            color:white;
+            cursor:pointer;
+            font-weight:bold;
+        ">
+        🚀 Join Meeting
+        </button>
+
+    </div>
+
+    <div style="
+        margin-top:15px;
+        text-align:center;
+    ">
+
+        <img
+        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(currentMeetingUrl)}"
+        style="
+            width:180px;
+            height:180px;
+            border-radius:10px;
+            border:1px solid #ccc;
+            background:white;
+        ">
+
+        <div style="
+            font-size:12px;
+            color:#64748b;
+            margin-top:8px;
+        ">
+        📱 สแกน QR เพื่อเข้าประชุมบนมือถือ
+        </div>
+
+    </div>
+    `;
+
+    /* COPY BUTTON */
+
+    setTimeout(()=>{
+
+        document
+        .getElementById('copyMeetingBtn')
+        .onclick = async()=>{
+
+            await navigator.clipboard
+            .writeText(currentMeetingUrl);
+
+            addMsg(
+                '📋 copy ลิงก์ประชุมแล้ว',
+                'ai'
+            );
+
+        };
+
+        document
+        .getElementById('openMeetingBtn')
+        .onclick = ()=>{
+
+            window.open(
+                currentMeetingUrl,
+                '_blank'
+            );
+
+        };
+
+    },100);
+
+    /* AUTO COPY */
 
     navigator.clipboard
     .writeText(currentMeetingUrl);
 
     addMsg(
-`📡 เปิดห้องประชุมแล้ว
+`📡 เปิดห้องประชุมสำเร็จ
 
-ส่งลิงก์นี้ให้มือถือเข้าร่วมประชุมได้`,
+✅ ส่งลิงก์ให้มือถือเข้าได้ทันที
+
+📱 มือถือสามารถ:
+• เปิดผ่าน Browser
+• เปิดกล้อง/ไมค์
+• ถาม AI ได้
+• ดูเอกสารร่วมกันได้`,
     'ai');
 
 };
+```
 
-/* SCREEN SHARE */
-
-document.getElementById('shareScreen')
-.onclick = async()=>{
-
-    try{
-
-        const stream =
-         await navigator.mediaDevices
-         .getDisplayMedia({
-
-            video:true,
-            audio:true
-
-         });
-
-        const video =
-         document.createElement('video');
-
-        video.srcObject = stream;
-
-        video.autoplay = true;
-
-        video.playsInline = true;
-
-        video.style.width = '100%';
-        video.style.height = '100%';
-        video.style.objectFit = 'contain';
-
-        const screen =
-         document.getElementById('screen');
-
-        screen.innerHTML = '';
-
-        screen.appendChild(video);
-
-        addMsg(
-            '🖥️ เริ่มแชร์หน้าจอแล้ว',
-            'ai'
-        );
-
-    }catch(err){
-
-        addMsg(
-            '❌ แชร์หน้าจอไม่สำเร็จ',
-            'ai'
-        );
-
-    }
-
-};
-
-/* RECORD */
-
-document.getElementById('recOn')
-.onclick = async()=>{
-
-    try{
-
-        const stream =
-         await navigator.mediaDevices
-         .getUserMedia({
-            audio:true
-         });
-
-        mediaRecorder =
-         new MediaRecorder(stream);
-
-        mediaRecorder.ondataavailable =
-         e=>audioChunks.push(e.data);
-
-        mediaRecorder.onstop = ()=>{
-
-            const blob =
-             new Blob(audioChunks,{
-                type:'audio/wav'
-             });
-
-            const link =
-             document.createElement('a');
-
-            link.href =
-             URL.createObjectURL(blob);
-
-            link.download =
-             'meeting.wav';
-
-            link.click();
-
-            audioChunks=[];
-
-        };
-
-        mediaRecorder.start();
-
-        document.getElementById('recOn')
-        .disabled=true;
-
-        document.getElementById('recOff')
-        .disabled=false;
-
-        addMsg(
-            '🎙️ เริ่มอัดเสียงแล้ว',
-            'ai'
-        );
-
-    }catch(err){
-
-        addMsg(
-            '❌ ไม่สามารถใช้งานไมโครโฟนได้',
-            'ai'
-        );
-
-    }
-
-};
-
-document.getElementById('recOff')
-.onclick = ()=>{
-
-    mediaRecorder.stop();
-
-    document.getElementById('recOn')
-    .disabled=false;
-
-    document.getElementById('recOff')
-    .disabled=true;
-
-    addMsg(
-        '⏹️ หยุดอัดเสียงแล้ว',
-        'ai'
-    );
-
-};
-
-/* DIVIDER LOCK */
-
-divider.addEventListener(
-'dblclick',
-()=>{
-
-    dividerLocked =
-     !dividerLocked;
-
-    if(dividerLocked){
-
-        divider.classList.add('locked');
-
-        dragStatus.innerText =
-         '🔒 Divider ถูกล็อก';
-
-    }else{
-
-        divider.classList.remove('locked');
-
-        dragStatus.innerText =
-         '🔓 Divider ปลดล็อก';
-
-    }
-
-});
-
-/* DRAG */
-
-divider.addEventListener(
-'mousedown',
-()=>{
-
-    if(dividerLocked) return;
-
-    isDragging = true;
-
-});
-
-window.addEventListener(
-'mouseup',
-()=>{
-
-    isDragging = false;
-
-});
-
-window.addEventListener(
-'mousemove',
-e=>{
-
-    if(!isDragging) return;
-
-    if(window.innerWidth <= 768){
-
-        const total =
-         appContainer.clientHeight;
-
-        const topHeight =
-         (e.clientY / total) * 100;
-
-        if(topHeight > 20 && topHeight < 80){
-
-            leftPanel.style.height =
-             topHeight + '%';
-
-            rightPanel.style.height =
-             (100-topHeight) + '%';
-
-        }
-
-    }else{
-
-        const total =
-         appContainer.clientWidth;
-
-        const leftWidth =
-         (e.clientX / total) * 100;
-
-        if(leftWidth > 20 && leftWidth < 80){
-
-            leftPanel.style.width =
-             leftWidth + '%';
-
-            rightPanel.style.width =
-             (100-leftWidth) + '%';
-
-        }
-
-    }
-
-});
 
 </script>
 
