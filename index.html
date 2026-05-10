@@ -3,111 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prove AI v4.2 - ระบบประชุมจังหวัดแพร่</title>
+    <title>Prove AI v4.3 - ระบบประชุมจังหวัดแพร่ (Official Online)</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
     <script type="importmap">
       { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
     </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
-        body, html { background-color: #f0f2f5; height: 100%; width: 100%; overflow: hidden; }
-        
-        /* 🧱 ล็อคโครงสร้าง 70:30 ตามที่พี่ต้องการ */
+        body, html { background-color: #f1f5f9; height: 100%; width: 100%; overflow: hidden; }
         .app-container { display: flex; width: 100vw; height: 100vh; flex-direction: row; }
 
-        /* ⬅️ ฝั่งซ้าย 70% (ส่วนประชุม) */
-        .left-panel { 
-            flex: 0 0 70%; 
-            padding: 40px; 
-            background-color: #f8fafc; 
-            border-right: 2px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-y: auto;
-        }
+        /* ⬅️ ฝั่งซ้าย 70% (พื้นที่ประชุมหลักและ Jitsi) */
+        .left-panel { flex: 0 0 70%; padding: 20px; display: flex; flex-direction: column; background-color: #f8fafc; border-right: 2px solid #e2e8f0; }
+        .meeting-display { flex: 1; width: 100%; background: #0f172a; border-radius: 15px; overflow: hidden; margin-bottom: 15px; border: 2px solid #cbd5e1; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        .header-info { text-align: center; margin-bottom: 30px; }
-        .header-info h1 { color: #1a237e; font-size: 2rem; }
-        .header-info h2 { color: #3b82f6; }
+        .control-bar { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn { padding: 12px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; color: white; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-webex { background-color: #10b981; }
+        .btn-jitsi { background-color: #3b82f6; }
+        .btn-record { background-color: #ef4444; }
+        .btn-stop { background-color: #4b5563; }
+        .status-rec { font-size: 12px; color: #ef4444; font-weight: bold; display: none; margin-left: 10px; animation: blink 1s infinite; }
 
-        .meeting-card { 
-            background: white; 
-            width: 100%; 
-            max-width: 600px; 
-            padding: 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-            text-align: center;
-        }
-
-        .webex-btn { 
-            width: 100%; 
-            padding: 18px; 
-            font-size: 1.2rem; 
-            font-weight: bold; 
-            background-color: #10b981; 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            margin-bottom: 20px;
-        }
-
-        .config-section { 
-            background: #eff6ff; 
-            padding: 20px; 
-            border-radius: 15px; 
-            text-align: left; 
-            border: 1px solid #bfdbfe;
-        }
-
-        /* ➡️ ฝั่งขวา 30% (ส่วนแชท AI) */
-        .right-panel { 
-            flex: 0 0 30%; 
-            display: flex; 
-            flex-direction: column; 
-            background-color: #ffffff; 
-            box-shadow: -5px 0 15px rgba(0,0,0,0.03);
-        }
-
+        /* ➡️ ฝั่งขวา 30% (สมอง AI) */
+        .right-panel { flex: 0 0 30%; display: flex; flex-direction: column; background-color: #ffffff; box-shadow: -5px 0 20px rgba(0,0,0,0.03); }
         .chat-header { padding: 20px; background-color: #1a237e; color: white; text-align: center; }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: #f8f9fa; }
+        .chat-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: #f8f9fa; }
+        .message { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .message.ai { align-self: flex-start; background-color: #e8eaf6; color: #1a237e; border-bottom-left-radius: 2px; }
+        .message.user { align-self: flex-end; background-color: #1a237e; color: white; border-bottom-right-radius: 2px; }
         
-        .msg { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 14px; line-height: 1.5; }
-        .msg.ai { align-self: flex-start; background-color: #e8eaf6; color: #1a237e; border-bottom-left-radius: 2px; }
-        .msg.user { align-self: flex-end; background-color: #1a237e; color: white; border-bottom-right-radius: 2px; }
-        
-        .chat-input-area { padding: 20px; border-top: 1px solid #eee; display: flex; gap: 10px; }
-        .chat-input-area input { flex: 1; padding: 12px; border-radius: 25px; border: 1px solid #ddd; outline: none; }
-        .send-btn { background: #1a237e; color: white; border: none; padding: 0 25px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        .chat-input-box { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 8px; background: white; }
+        #userInput { flex: 1; padding: 12px; border-radius: 25px; border: 1px solid #ddd; outline: none; }
+        .send-btn { background: #1a237e; color: white; border: none; padding: 0 20px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="left-panel">
-            <div class="header-info">
-                <h1>🏛️ ระบบประชุมจังหวัดแพร่</h1>
-                <h2>โครงการก่อสร้างศูนย์ราชการ (งวดที่ 3)</h2>
-                <p>เจ้าหน้าที่: นายสิริวิชญ์ ระงับ</p>
+            <div class="meeting-display" id="meetingView">
+                <div style="color:white; text-align:center; padding-top:20%;">
+                    <h2>🎥 ระบบประชุมตรวจรับพัสดุจังหวัดแพร่</h2>
+                    <p style="opacity: 0.6;">กดปุ่มด้านล่างเพื่อเริ่ม Jitsi (70%) หรือ Webex</p>
+                </div>
             </div>
-            <div class="meeting-card">
-                <button class="webex-btn" id="btnOpen">🎥 เข้าสู่ห้องประชุม Webex</button>
-                <div class="config-section">
-                    <p style="font-weight:bold; color:#1a237e;">⚙️ ตั้งค่าลิงก์ประชุม:</p>
-                    <input type="text" id="urlInput" style="width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #cbd5e1;" placeholder="วางลิงก์ Webex ที่นี่...">
+
+            <div class="control-bar">
+                <div class="btn-grid">
+                    <button class="btn btn-webex" onclick="window.open(prompt('วางลิงก์ Webex:'), '_blank')">🎥 เปิด Webex</button>
+                    <button class="btn btn-jitsi" id="startJitsi">🔄 เริ่ม Jitsi ในนี้</button>
+                    <button class="btn" style="background:#64748b;" onclick="document.getElementById('fileIn').click()">📁 อ่านระเบียบพัสดุ</button>
+                </div>
+                <div style="display:flex; align-items:center; border-top:1px solid #eee; padding-top:15px;">
+                    <button class="btn btn-record" id="recBtn">🎙️ เริ่มอัดเสียง</button>
+                    <button class="btn btn-stop" id="stopBtn" disabled style="margin-left:8px;">⏹️ หยุด</button>
+                    <span class="status-rec" id="recStatus">● RECORDING</span>
+                    <input type="file" id="fileIn" style="display:none" accept=".pdf,.txt">
                 </div>
             </div>
         </div>
 
         <div class="right-panel">
-            <div class="chat-header"><h3>🤖 Prove AI Specialist</h3></div>
-            <div class="chat-messages" id="chatBox">
-                <div class="msg ai">สวัสดีครับพี่สิริวิชญ์ ผม Prove AI พร้อมช่วยวิเคราะห์ระเบียบพัสดุแล้วครับ</div>
+            <div class="chat-header">
+                <h3>🤖 Prove AI Specialist</h3>
+                <p style="font-size: 10px; opacity: 0.7;">ผู้เชี่ยวชาญระเบียบพัสดุ v4.3</p>
             </div>
-            <div class="chat-input-area">
-                <input type="text" id="userInput" placeholder="ถามระเบียบพัสดุ...">
-                <button class="send-btn" id="btnSend">ส่ง</button>
+            <div class="chat-area" id="chatBox">
+                <div class="message ai">สวัสดีครับพี่สิริวิชญ์ ผมพร้อมช่วยตรวจงานงวด 3 แล้วครับ</div>
+            </div>
+            <div class="chat-input-box">
+                <input type="text" id="userInput" placeholder="ถามตอบระเบียบพัสดุ..." autocomplete="off">
+                <button class="send-btn" id="sendBtn">ส่ง</button>
             </div>
         </div>
     </div>
@@ -115,53 +85,82 @@
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
 
-        // ✅ ใช้ API Key เดิมที่พี่รันผ่าน
+        // ✅ ใช้ระบบ SDK ที่เสถียรที่สุดสำหรับ Vercel
         const API_KEY = "AIzaSyD-NGKFKHoCZix9rrFMaNing_w2wARAAGc";
         const genAI = new GoogleGenerativeAI(API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const chatBox = document.getElementById('chatBox');
-        const userInput = document.getElementById('userInput');
-        const urlInput = document.getElementById('urlInput');
+        let mediaRecorder, audioChunks = [], contextData = "";
 
-        // ระบบจำลิงก์ Webex
-        urlInput.value = localStorage.getItem('webex_link') || "";
-        urlInput.oninput = () => localStorage.setItem('webex_link', urlInput.value);
-        document.getElementById('btnOpen').onclick = () => {
-            if(urlInput.value) window.open(urlInput.value, "_blank");
-            else alert("กรุณาวางลิงก์ Webex ก่อนครับพี่");
-        };
-
-        // ระบบแชท AI
-        async function handleChat() {
-            const text = userInput.value.trim();
+        // ระบบ AI ถามตอบ
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
             if(!text) return;
 
             appendMsg(text, 'user');
-            userInput.value = "";
-            const loading = appendMsg("กำลังวิเคราะห์ระเบียบ... 🧠", 'ai');
+            input.value = "";
+            const loading = appendMsg("กำลังประมวลผล... 🧠", 'ai');
 
             try {
-                // เปลี่ยนมาใช้ SDK เพื่อข้ามกำแพงความปลอดภัยของ Vercel
-                const result = await model.generateContent(`คุณคือ Prove AI ที่ปรึกษาพัสดุจังหวัดแพร่ ตอบคำถามนี้ให้พี่สิริวิชญ์: ${text}`);
+                const result = await model.generateContent(`ข้อมูลอ้างอิง: ${contextData}\nคำถาม: ${text}\n(ตอบในฐานะผู้เชี่ยวชาญพัสดุจังหวัดแพร่)`);
                 loading.remove();
                 appendMsg(result.response.text(), 'ai');
             } catch (e) {
-                loading.innerText = "🚨 ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งครับ";
+                loading.innerText = "🚨 เกิดข้อผิดพลาด กรุณารีเฟรชหน้าเว็บครับ";
             }
         }
 
         function appendMsg(t, s) {
             const div = document.createElement('div');
-            div.className = `msg ${s}`;
+            div.className = `message ${s}`;
             div.innerText = t;
+            const chatBox = document.getElementById('chatBox');
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
             return div;
         }
 
-        document.getElementById('btnSend').onclick = handleChat;
-        userInput.onkeydown = (e) => { if(e.key === 'Enter') handleChat(); };
+        // ระบบ Jitsi 70%
+        document.getElementById('startJitsi').onclick = () => {
+            const room = "Phrae-Meeting-" + Math.floor(Math.random() * 1000);
+            document.getElementById('meetingView').innerHTML = `<iframe src="https://meet.jit.si/${room}" allow="camera; microphone; fullscreen; display-capture; autoplay"></iframe>`;
+        };
+
+        // ระบบบันทึกเสียง
+        document.getElementById('recBtn').onclick = async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/wav' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `บันทึกเสียงประชุม_จังหวัดแพร่.wav`;
+                link.click(); audioChunks = [];
+            };
+            mediaRecorder.start();
+            document.getElementById('recBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('recStatus').style.display = 'inline';
+        };
+
+        document.getElementById('stopBtn').onclick = () => {
+            mediaRecorder.stop();
+            document.getElementById('recBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('recStatus').style.display = 'none';
+        };
+
+        // ระบบอ่านไฟล์
+        document.getElementById('fileIn').onchange = e => {
+            const reader = new FileReader();
+            reader.onload = r => { contextData = r.target.result; appendMsg(`AI อ่านข้อมูลไฟล์ "${e.target.files[0].name}" เรียบร้อย`, 'ai'); };
+            reader.readAsText(e.target.files[0]);
+        };
+
+        document.getElementById('sendBtn').onclick = sendMessage;
+        document.getElementById('userInput').onkeydown = e => { if(e.key === 'Enter') sendMessage(); };
     </script>
 </body>
 </html>
