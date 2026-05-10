@@ -1,22 +1,64 @@
 import { GoogleGenerativeAI }
-        const chunks = text.split(/\\n\\s*\\n/)
+from "@google/generative-ai";
 
-        const results = chunks.filter(chunk => {
+import fs from "fs";
+import path from "path";
+
+const genAI =
+ new GoogleGenerativeAI(
+   process.env.GEMINI_API_KEY
+ );
+
+const model =
+ genAI.getGenerativeModel({
+   model: "gemini-2.5-flash"
+ });
+
+function searchContext(question) {
+
+    try {
+
+        const filePath =
+         path.join(
+            process.cwd(),
+            "data",
+            "knowledge.txt"
+         );
+
+        const text =
+         fs.readFileSync(
+            filePath,
+            "utf8"
+         );
+
+        // แบ่ง paragraph
+        const chunks =
+         text.split(/\n\s*\n/);
+
+        // ค้น keyword
+        const results =
+         chunks.filter(chunk => {
 
             return question
-    .toLowerCase()
-    .split(/\s+/)
-    .some(word =>
-        chunk.toLowerCase().includes(word)
-    );
+                .toLowerCase()
+                .split(/\s+/)
+                .some(word =>
+                    chunk
+                      .toLowerCase()
+                      .includes(word)
+                );
 
-        });
+         });
 
-        return results.slice(0, 5).join('\n');
+        return results
+            .slice(0, 5)
+            .join("\n\n");
 
     } catch(err) {
 
-        return '';
+        console.error(err);
+
+        return "";
 
     }
 
@@ -34,13 +76,17 @@ export default async function handler(
         } = req.body;
 
         const context =
-            searchContext(message);
+         searchContext(message);
 
         const prompt = `
 คุณคือผู้เชี่ยวชาญระเบียบพัสดุภาครัฐไทย
 
-ตอบเฉพาะจากข้อมูลอ้างอิง
-หากไม่มีข้อมูล ให้แจ้งว่า
+ตอบเฉพาะจากข้อมูลอ้างอิงเท่านั้น
+
+ห้ามเดา
+ห้ามแต่งข้อมูลเพิ่ม
+
+หากไม่มีข้อมูลให้ตอบว่า:
 "ไม่พบข้อมูลในเอกสาร"
 
 ข้อมูลอ้างอิง:
@@ -51,10 +97,12 @@ ${message}
 `;
 
         const result =
-            await model.generateContent(prompt);
+         await model.generateContent(
+            prompt
+         );
 
         const text =
-            result.response.text();
+         result.response.text();
 
         return res.status(200).json({
             reply: text
