@@ -121,19 +121,21 @@ async function runChat() {
 
         const data = await response.json();
 
+        console.log(data);
+
         loading.remove();
 
         addMsg(
-            data.reply || "AI ไม่สามารถตอบได้",
+            data.reply || data.error || 'AI ไม่ตอบ',
             'ai'
         );
-        
+
     } catch (err) {
 
         console.error(err);
 
         loading.innerText =
-            "🚨 ระบบ AI ขัดข้อง";
+            '🚨 ระบบ AI ขัดข้อง';
     }
 }
 
