@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -17,7 +18,7 @@
     font-family:'Sarabun',sans-serif;
 }
 
-body,html{
+html,body{
     width:100%;
     height:100%;
     overflow:hidden;
@@ -50,6 +51,7 @@ body,html{
     overflow:hidden;
     margin-bottom:15px;
     border:2px solid #cbd5e1;
+    position:relative;
 }
 
 iframe{
@@ -107,6 +109,7 @@ iframe{
     background:#94a3b8;
     cursor:col-resize;
     flex-shrink:0;
+    transition:background .2s;
 }
 
 #divider:hover{
@@ -243,17 +246,20 @@ iframe{
 
             <div class="btn-row">
 
-                <button class="btn btn-webex"
+                <button
+                class="btn btn-webex"
                 onclick="window.open(prompt('วางลิงก์ Webex'),'_blank')">
                     🎥 Webex
                 </button>
 
-                <button class="btn btn-jitsi"
+                <button
+                class="btn btn-jitsi"
                 id="startJitsi">
                     🔄 Jitsi
                 </button>
 
-                <button class="btn btn-file"
+                <button
+                class="btn btn-file"
                 onclick="document.getElementById('fileInput').click()">
                     📁 เอกสาร
                 </button>
@@ -262,12 +268,14 @@ iframe{
 
             <div style="display:flex;gap:10px;align-items:center;">
 
-                <button class="btn btn-record"
+                <button
+                class="btn btn-record"
                 id="recOn">
                     🎙️ อัดเสียง
                 </button>
 
-                <button class="btn btn-stop"
+                <button
+                class="btn btn-stop"
                 id="recOff"
                 disabled>
                     ⏹️ หยุด
@@ -337,6 +345,8 @@ let audioChunks = [];
 let context = "";
 
 let isDragging = false;
+let autoSlide = false;
+let slideInterval;
 
 const leftPanel =
  document.querySelector('.left-panel');
@@ -346,6 +356,9 @@ const rightPanel =
 
 const divider =
  document.getElementById('divider');
+
+const appContainer =
+ document.querySelector('.app-container');
 
 /* AI */
 
@@ -548,13 +561,13 @@ document.getElementById('userInput')
 
 };
 
-/* RESIZE */
+/* DIVIDER DRAG */
 
 divider.addEventListener(
 'mousedown',
 ()=>{
 
-    isDragging=true;
+    isDragging = true;
 
 });
 
@@ -562,7 +575,7 @@ window.addEventListener(
 'mouseup',
 ()=>{
 
-    isDragging=false;
+    isDragging = false;
 
 });
 
@@ -573,21 +586,58 @@ e=>{
     if(!isDragging) return;
 
     const total =
-     window.innerWidth;
+     appContainer.clientWidth;
 
     const leftWidth =
-     (e.clientX/total)*100;
+     (e.clientX / total) * 100;
 
     if(
-        leftWidth>20 &&
-        leftWidth<80
+        leftWidth > 20 &&
+        leftWidth < 80
     ){
 
         leftPanel.style.width =
          leftWidth + '%';
 
         rightPanel.style.width =
-         (100-leftWidth)+'%';
+         (100 - leftWidth) + '%';
+
+    }
+
+});
+
+/* CLICK AUTO SLIDE */
+
+divider.addEventListener(
+'click',
+()=>{
+
+    autoSlide = !autoSlide;
+
+    if(autoSlide){
+
+        let size = 70;
+        let dir = 1;
+
+        slideInterval =
+         setInterval(()=>{
+
+            size += dir;
+
+            if(size >= 80) dir = -1;
+            if(size <= 40) dir = 1;
+
+            leftPanel.style.width =
+             size + '%';
+
+            rightPanel.style.width =
+             (100 - size) + '%';
+
+         },100);
+
+    }else{
+
+        clearInterval(slideInterval);
 
     }
 
@@ -597,3 +647,4 @@ e=>{
 
 </body>
 </html>
+```
