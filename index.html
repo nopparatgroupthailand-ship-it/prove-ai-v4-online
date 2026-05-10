@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Prove AI v11</title>
+<title>Prove AI v12</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -20,8 +20,8 @@
 html,body{
     width:100%;
     height:100%;
-    overflow:hidden;
     background:#f1f5f9;
+    overflow:hidden;
 }
 
 .app-container{
@@ -149,10 +149,6 @@ video{
     background:#2563eb;
 }
 
-.join-btn{
-    background:#16a34a;
-}
-
 /* DIVIDER */
 
 #divider{
@@ -264,10 +260,6 @@ video{
         grid-template-columns:1fr 1fr;
     }
 
-    .chat-body{
-        padding-bottom:80px;
-    }
-
 }
 
 </style>
@@ -348,7 +340,7 @@ video{
             style="display:none"
             accept=".pdf,.txt,.doc,.docx">
 
-            <!-- LINK BOX -->
+            <!-- LINK -->
 
             <div class="link-box" id="meetingLinkBox">
 
@@ -370,12 +362,6 @@ video{
                     class="link-btn copy-btn"
                     id="copyBtn">
                         📋 Copy Link
-                    </button>
-
-                    <button
-                    class="link-btn join-btn"
-                    id="joinBtn">
-                        🚀 เปิดลิงก์
                     </button>
 
                 </div>
@@ -574,9 +560,17 @@ window.openWebex = ()=>{
 
     if(url){
 
-        window.open(
-            url,
-            '_blank'
+        document.getElementById('screen')
+        .innerHTML = `
+        <iframe
+        src="${url}"
+        allow="camera; microphone; fullscreen; display-capture">
+        </iframe>
+        `;
+
+        addMsg(
+            '🎥 เปิด Webex แล้ว',
+            'ai'
         );
 
     }
@@ -594,7 +588,7 @@ document.getElementById('startJitsi')
     currentMeetingUrl =
      `https://meet.jit.si/${room}`;
 
-    /* เปิดประชุมในหน้าเดียว */
+    /* ประชุมในหน้าเดียวกับ AI */
 
     document.getElementById('screen')
     .innerHTML = `
@@ -618,7 +612,7 @@ document.getElementById('startJitsi')
     link.innerText =
      currentMeetingUrl;
 
-    /* COPY */
+    /* COPY BUTTON */
 
     document.getElementById('copyBtn')
     .onclick = async()=>{
@@ -644,18 +638,6 @@ document.getElementById('startJitsi')
 
     };
 
-    /* OPEN */
-
-    document.getElementById('joinBtn')
-    .onclick = ()=>{
-
-        window.open(
-            currentMeetingUrl,
-            '_blank'
-        );
-
-    };
-
     /* AUTO COPY */
 
     navigator.clipboard
@@ -665,8 +647,9 @@ document.getElementById('startJitsi')
     addMsg(
 `📡 เปิดห้องประชุมแล้ว
 
-✅ ใช้งานในหน้าเดียวกับ AI
-📱 มือถือเข้า Browser ได้ทันที`,
+🔗 ส่งลิงก์ให้กรรมการได้ทันที
+📱 มือถือเข้า Browser ได้เลย
+🤖 ใช้งาน AI พร้อมประชุมได้ในหน้าเดียว`,
     'ai');
 
 };
