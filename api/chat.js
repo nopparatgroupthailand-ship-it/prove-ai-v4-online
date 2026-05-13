@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         // 3. เรียกใช้ Gemini
         const model = genAI.getGenerativeModel({ model: MODEL_NAME });
         
-        // 4. ส่ง Prompt แบบง่าย (ไม่ผ่านฟังก์ชันซับซ้อน)
+        // 4. ส่ง Prompt แบบง่าย
         const prompt = `บริบท: ${context || "ไม่มี"}\nคำถาม: ${message}`;
         const result = await model.generateContent(prompt);
         const response = await result.response;
