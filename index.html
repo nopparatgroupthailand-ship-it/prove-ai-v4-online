@@ -1,285 +1,113 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prove AI Stable v14</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Sarabun',sans-serif;}
-
-html,body{
-width:100%;
-height:100%;
-overflow:hidden;
-background:#f1f5f9;
-}
-
-.app{
-display:flex;
-width:100%;
-height:100%;
-}
-
-/* LEFT */
-.left{
-width:70%;
-display:flex;
-flex-direction:column;
-padding:10px;
-}
-
-.meeting{
-flex:1;
-background:#0f172a;
-border-radius:16px;
-overflow:hidden;
-border:2px solid #cbd5e1;
-position:relative;
-}
-
-iframe,video{
-width:100%;
-height:100%;
-border:0;
-}
-
-/* CONTROL */
-.control{
-display:flex;
-gap:10px;
-padding:10px;
-background:white;
-border-top:1px solid #ddd;
-}
-
-.btn{
-padding:10px 14px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-color:white;
-}
-
-.blue{background:#2563eb;}
-.green{background:#10b981;}
-.gray{background:#64748b;}
-
-/* RESIZE BAR */
-.resizer{
-width:8px;
-cursor:col-resize;
-background:#94a3b8;
-}
-
-/* RIGHT */
-.right{
-width:30%;
-display:flex;
-flex-direction:column;
-background:white;
-}
-
-.header{
-background:#1e1b4b;
-color:white;
-text-align:center;
-padding:15px;
-}
-
-.chat{
-flex:1;
-overflow:auto;
-padding:10px;
-background:#f8fafc;
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
-.msg{
-padding:10px;
-border-radius:12px;
-max-width:90%;
-white-space:pre-wrap;
-}
-
-.ai{background:#e0e7ff;}
-.user{background:#1e1b4b;color:white;align-self:flex-end;}
-
-.input{
-display:flex;
-gap:10px;
-padding:10px;
-border-top:1px solid #ddd;
-}
-
-input{
-flex:1;
-padding:10px;
-border-radius:20px;
-border:1px solid #ddd;
-}
-
-.send{
-background:#1e1b4b;
-color:white;
-border:none;
-border-radius:20px;
-padding:10px 15px;
-cursor:pointer;
-}
-
-.linkbox{
-display:none;
-padding:10px;
-background:#eff6ff;
-border-top:1px solid #bfdbfe;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prove AI Stable v14 (Local Mode)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Sarabun',sans-serif;}
+        html,body{width:100%;height:100%;overflow:hidden;background:#f1f5f9;}
+        .app{display:flex;width:100%;height:100%;}
+        
+        /* LEFT */
+        .left{width:70%;display:flex;flex-direction:column;padding:10px;transition: width 0.1s;}
+        .meeting{flex:1;background:#0f172a;border-radius:16px;overflow:hidden;border:2px solid #cbd5e1;position:relative;}
+        iframe{width:100%;height:100%;border:0;}
+        
+        /* CONTROL */
+        .control{display:flex;gap:10px;padding:10px;background:white;border-top:1px solid #ddd;}
+        .btn{padding:10px 14px;border:none;border-radius:10px;cursor:pointer;color:white;}
+        .blue{background:#2563eb;}.green{background:#10b981;}.gray{background:#64748b;}
+        
+        /* RIGHT */
+        .right{width:30%;display:flex;flex-direction:column;background:white;}
+        .header{background:#1e1b4b;color:white;text-align:center;padding:15px;font-weight:bold;}
+        .chat{flex:1;overflow-y:auto;padding:15px;background:#f8fafc;display:flex;flex-direction:column;gap:10px;}
+        .msg{padding:10px;border-radius:12px;max-width:90%;white-space:pre-wrap;line-height:1.5;}
+        .ai{background:#e0e7ff;align-self:flex-start;}.user{background:#1e1b4b;color:white;align-self:flex-end;}
+        
+        .input-area{display:flex;gap:10px;padding:15px;border-top:1px solid #ddd;background:white;}
+        input{flex:1;padding:10px;border-radius:20px;border:1px solid #ddd;outline:none;}
+        .send{background:#1e1b4b;color:white;border:none;border-radius:20px;padding:0 20px;cursor:pointer;}
+    </style>
 </head>
-
 <body>
 
 <div class="app">
+    <div class="left" id="leftPanel">
+        <div class="meeting" id="screen"><div style="color:white;text-align:center;padding-top:20%">🎥 Ready (Ollama Local)</div></div>
+        <div class="control">
+            <button class="btn blue" id="jitsiBtn">Jitsi</button>
+            <button class="btn green" id="webexBtn">Webex</button>
+            <button class="btn gray" id="fileBtn">Upload PDF/TXT</button>
+            <input type="file" id="fileInput" hidden>
+        </div>
+    </div>
 
-<!-- LEFT -->
-<div class="left">
-
-<div class="meeting" id="screen">
-<div style="color:white;text-align:center;padding-top:20%">🎥 Ready</div>
-</div>
-
-<div class="control">
-<button class="btn blue" id="jitsiBtn">Jitsi</button>
-<button class="btn green" id="webexBtn">Webex</button>
-<button class="btn gray" id="fileBtn">Upload</button>
-<input type="file" id="fileInput" hidden>
-</div>
-
-<div class="linkbox" id="linkbox">
-<div id="linktext"></div>
-<button onclick="copyLink()">Copy</button>
-</div>
-
-</div>
-
-<div class="resizer" id="drag"></div>
-
-<!-- RIGHT -->
-<div class="right">
-
-<div class="header">🤖 Prove AI</div>
-
-<div class="chat" id="chat"></div>
-
-<div class="input">
-<input id="msg" placeholder="ถาม AI..." />
-<button class="send" id="send">ส่ง</button>
-</div>
-
-</div>
-
+    <div class="right">
+        <div class="header">🤖 Prove AI (Local Mode)</div>
+        <div class="chat" id="chat"></div>
+        <div class="input-area">
+            <input id="msg" placeholder="ถามเกี่ยวกับเอกสาร..." />
+            <button class="send" id="send">ส่ง</button>
+        </div>
+    </div>
 </div>
 
 <script>
-let url="";
-let contextText="";
+    let contextText = "";
+    const chat = document.getElementById("chat");
+    const msg = document.getElementById("msg");
 
-/* CHAT */
-function add(t,c){
-const d=document.createElement("div");
-d.className="msg "+c;
-d.innerText=t;
-chat.appendChild(d);
-chat.scrollTop=999999;
-}
+    function add(text, sender) {
+        const div = document.createElement("div");
+        div.className = "msg " + sender;
+        div.innerText = text;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
 
-/* SEND */
-send.onclick=async()=>{
-if(!msg.value)return;
+    /* ส่งข้อความไปหา API */
+    document.getElementById("send").onclick = async () => {
+        if(!msg.value.trim()) return;
+        
+        add(msg.value, "user");
+        const currentMsg = msg.value;
+        msg.value = "";
 
-add(msg.value,"user");
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ message: currentMsg, context: contextText })
+            });
+            const data = await res.json();
+            add(data.reply || "ไม่ได้รับคำตอบจาก AI", "ai");
+        } catch (e) {
+            add("เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI", "ai");
+        }
+    };
 
-const res=await fetch("/api/chat",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-message:msg.value,
-context:contextText
-})
-});
+    /* Upload File */
+    document.getElementById("fileBtn").onclick = () => document.getElementById("fileInput").click();
+    document.getElementById("fileInput").onchange = async (e) => {
+        const fd = new FormData();
+        fd.append("file", e.target.files[0]);
+        add("กำลังโหลดเอกสาร...", "ai");
+        
+        const r = await fetch("/api/upload", { method: "POST", body: fd });
+        const d = await r.json();
+        contextText = d.text;
+        add("📁 โหลดเอกสารสำเร็จ: " + d.filename, "ai");
+    };
 
-const data=await res.json();
-
-add(data.reply||"no response","ai");
-
-msg.value="";
-};
-
-/* ENTER FIX */
-msg.addEventListener("keydown",(e)=>{
-if(e.key==="Enter")send.onclick();
-});
-
-/* JITSI FIX */
-jitsiBtn.onclick=()=>{
-const room="AI-"+Date.now();
-url="https://meet.jit.si/"+room;
-
-screen.innerHTML=`
-<iframe src="${url}#config.prejoinPageEnabled=false"
-allow="camera; microphone; fullscreen; display-capture"></iframe>
-`;
-
-linkbox.style.display="block";
-linktext.innerText=url;
-
-add("📡 เปิดประชุมแล้ว:\n"+url,"ai");
-};
-
-/* COPY */
-function copyLink(){
-navigator.clipboard.writeText(url);
-}
-
-/* WEBEX */
-webexBtn.onclick=()=>{
-const w=prompt("Webex link");
-if(!w)return;
-screen.innerHTML=`<iframe src="${w}"></iframe>`;
-};
-
-/* FILE UPLOAD */
-fileBtn.onclick=()=>fileInput.click();
-
-fileInput.onchange=async(e)=>{
-const f=e.target.files[0];
-const fd=new FormData();
-fd.append("file",f);
-
-const r=await fetch("/api/upload",{method:"POST",body:fd});
-const d=await r.json();
-
-contextText=d.text;
-
-add("📁 โหลดเอกสารแล้ว (RAG ready)","ai");
-};
-
-/* DRAG */
-let isDown=false;
-drag.onmousedown=()=>isDown=true;
-document.onmouseup=()=>isDown=false;
-document.onmousemove=(e)=>{
-if(!isDown)return;
-let w=e.clientX/window.innerWidth*100;
-if(w<20||w>80)return;
-document.querySelector(".left").style.width=w+"%";
-document.querySelector(".right").style.width=(100-w)+"%";
-};
+    /* Jitsi */
+    document.getElementById("jitsiBtn").onclick = () => {
+        const room = "AI-" + Date.now();
+        document.getElementById("screen").innerHTML = `<iframe src="https://meet.jit.si/${room}#config.prejoinPageEnabled=false" allow="camera; microphone; fullscreen"></iframe>`;
+        add("📡 เปิดห้องประชุม: " + room, "ai");
+    };
 </script>
 
 </body>
