@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prove AI Stable v14 (Remote Meeting Mode)</title>
+    <title>Prove AI - Cloud Stable</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Sarabun',sans-serif;}
@@ -19,7 +19,6 @@
         .control{display:flex;gap:10px;padding:10px;background:white;border-bottom:1px solid #ddd;}
         .btn{padding:10px 14px;border:none;border-radius:10px;cursor:pointer;color:white;}
         .blue{background:#2563eb;}.green{background:#10b981;}.gray{background:#64748b;}
-        .url-input{flex:1;padding:10px;border-radius:10px;border:1px solid #ccc;outline:none;}
         
         /* RIGHT */
         .right{width:30%;display:flex;flex-direction:column;background:white;}
@@ -41,14 +40,13 @@
         <div class="control">
             <button class="btn blue" id="jitsiBtn">Jitsi</button>
             <button class="btn green" id="webexBtn">Webex</button>
-            <input id="ollamaUrl" class="url-input" placeholder="URL ของ AI (เช่น https://xxxx.ngrok-free.app)" />
-            <button class="btn gray" id="fileBtn">Upload</button>
+            <button class="btn gray" id="fileBtn">Upload PDF/TXT</button>
             <input type="file" id="fileInput" hidden>
         </div>
     </div>
 
     <div class="right">
-        <div class="header">🤖 Prove AI (Remote Ready)</div>
+        <div class="header">🤖 Prove AI (Gemini Cloud)</div>
         <div class="chat" id="chat"></div>
         <div class="input-area">
             <input id="msg" placeholder="ถาม AI..." />
@@ -74,23 +72,18 @@
         if(!msg.value.trim()) return;
         add(msg.value, "user");
         const currentMsg = msg.value;
-        const targetUrl = document.getElementById("ollamaUrl").value || "http://localhost:11434";
         msg.value = "";
 
         try {
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ 
-                    message: currentMsg, 
-                    context: contextText,
-                    ollamaUrl: targetUrl 
-                })
+                body: JSON.stringify({ message: currentMsg, context: contextText })
             });
             const data = await res.json();
             add(data.reply || "ไม่ได้รับคำตอบจาก AI", "ai");
         } catch (e) {
-            add("เกิดข้อผิดพลาด: โปรดตรวจสอบว่ารัน ngrok และตั้งค่า URL ถูกต้อง", "ai");
+            add("เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ", "ai");
         }
     };
 
