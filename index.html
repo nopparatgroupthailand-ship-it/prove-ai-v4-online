@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prove AI Stable v14 (Local Mode)</title>
+    <title>Prove AI Stable v14 (Remote Meeting Mode)</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Sarabun',sans-serif;}
@@ -11,14 +11,15 @@
         .app{display:flex;width:100%;height:100%;}
         
         /* LEFT */
-        .left{width:70%;display:flex;flex-direction:column;padding:10px;transition: width 0.1s;}
+        .left{width:70%;display:flex;flex-direction:column;padding:10px;}
         .meeting{flex:1;background:#0f172a;border-radius:16px;overflow:hidden;border:2px solid #cbd5e1;position:relative;}
         iframe{width:100%;height:100%;border:0;}
         
         /* CONTROL */
-        .control{display:flex;gap:10px;padding:10px;background:white;border-top:1px solid #ddd;}
+        .control{display:flex;gap:10px;padding:10px;background:white;border-bottom:1px solid #ddd;}
         .btn{padding:10px 14px;border:none;border-radius:10px;cursor:pointer;color:white;}
         .blue{background:#2563eb;}.green{background:#10b981;}.gray{background:#64748b;}
+        .url-input{flex:1;padding:10px;border-radius:10px;border:1px solid #ccc;outline:none;}
         
         /* RIGHT */
         .right{width:30%;display:flex;flex-direction:column;background:white;}
@@ -35,21 +36,22 @@
 <body>
 
 <div class="app">
-    <div class="left" id="leftPanel">
-        <div class="meeting" id="screen"><div style="color:white;text-align:center;padding-top:20%">🎥 Ready (Ollama Local)</div></div>
+    <div class="left">
+        <div class="meeting" id="screen"><div style="color:white;text-align:center;padding-top:20%">🎥 Ready</div></div>
         <div class="control">
             <button class="btn blue" id="jitsiBtn">Jitsi</button>
             <button class="btn green" id="webexBtn">Webex</button>
-            <button class="btn gray" id="fileBtn">Upload PDF/TXT</button>
+            <input id="ollamaUrl" class="url-input" placeholder="URL ของ AI (เช่น https://xxxx.ngrok-free.app)" />
+            <button class="btn gray" id="fileBtn">Upload</button>
             <input type="file" id="fileInput" hidden>
         </div>
     </div>
 
     <div class="right">
-        <div class="header">🤖 Prove AI (Local Mode)</div>
+        <div class="header">🤖 Prove AI (Remote Ready)</div>
         <div class="chat" id="chat"></div>
         <div class="input-area">
-            <input id="msg" placeholder="ถามเกี่ยวกับเอกสาร..." />
+            <input id="msg" placeholder="ถาม AI..." />
             <button class="send" id="send">ส่ง</button>
         </div>
     </div>
@@ -68,47 +70,45 @@
         chat.scrollTop = chat.scrollHeight;
     }
 
-    /* ส่งข้อความไปหา API */
     document.getElementById("send").onclick = async () => {
         if(!msg.value.trim()) return;
-        
         add(msg.value, "user");
         const currentMsg = msg.value;
+        const targetUrl = document.getElementById("ollamaUrl").value || "http://localhost:11434";
         msg.value = "";
 
         try {
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ message: currentMsg, context: contextText })
+                body: JSON.stringify({ 
+                    message: currentMsg, 
+                    context: contextText,
+                    ollamaUrl: targetUrl 
+                })
             });
             const data = await res.json();
             add(data.reply || "ไม่ได้รับคำตอบจาก AI", "ai");
         } catch (e) {
-            add("เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI", "ai");
+            add("เกิดข้อผิดพลาด: โปรดตรวจสอบว่ารัน ngrok และตั้งค่า URL ถูกต้อง", "ai");
         }
     };
 
-    /* Upload File */
     document.getElementById("fileBtn").onclick = () => document.getElementById("fileInput").click();
     document.getElementById("fileInput").onchange = async (e) => {
         const fd = new FormData();
         fd.append("file", e.target.files[0]);
         add("กำลังโหลดเอกสาร...", "ai");
-        
         const r = await fetch("/api/upload", { method: "POST", body: fd });
         const d = await r.json();
         contextText = d.text;
         add("📁 โหลดเอกสารสำเร็จ: " + d.filename, "ai");
     };
 
-    /* Jitsi */
     document.getElementById("jitsiBtn").onclick = () => {
         const room = "AI-" + Date.now();
         document.getElementById("screen").innerHTML = `<iframe src="https://meet.jit.si/${room}#config.prejoinPageEnabled=false" allow="camera; microphone; fullscreen"></iframe>`;
-        add("📡 เปิดห้องประชุม: " + room, "ai");
     };
 </script>
-
 </body>
 </html>
