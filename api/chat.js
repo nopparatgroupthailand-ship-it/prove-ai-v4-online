@@ -1,15 +1,15 @@
 /* =========================
-   PROVE AI - GEMINI CLOUD VERSION
-   เน้นความเสถียรบน Vercel (Cloud Only)
+   PROVE AI - ES MODULE VERSION
+   เปลี่ยนจาก require เป็น import เพื่อให้เข้ากับ Vercel
 ========================= */
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // ตรวจสอบ API Key
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
-// ตั้งค่าโมเดลที่ต้องการใช้
+// ตั้งค่าโมเดล
 const CLOUD_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"];
 
 function searchContext(question, text) {
@@ -24,12 +24,10 @@ async function callGemini(modelName, prompt) {
     if (!genAI) throw new Error("No API Key configured");
     const model = genAI.getGenerativeModel({ model: modelName });
     const result = await model.generateContent(prompt);
-    return result?.response?.text?.();
+    return result?.response?.text();
 }
 
-/* =========================
-   MAIN HANDLER
-========================= */
+/* MAIN HANDLER */
 export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -45,14 +43,12 @@ export default async function handler(req, res) {
 
         let reply = "";
 
-        // เรียกใช้งาน Gemini โดยตรง
         for (const modelName of CLOUD_MODELS) {
             try {
-                console.log("Calling Gemini model:", modelName);
                 reply = await callGemini(modelName, prompt);
                 if (reply) break;
             } catch (err) {
-                console.error("Error calling", modelName, ":", err.message);
+                console.error("Error with", modelName, ":", err.message);
             }
         }
 
@@ -64,6 +60,6 @@ export default async function handler(req, res) {
 
     } catch (err) {
         console.error("Global Error:", err);
-        return res.status(500).json({ reply: "ระบบขัดข้อง กรุณาตรวจสอบ API Key ใน Environment Variables" });
+        return res.status(500).json({ reply: "ระบบขัดข้อง กรุณาตรวจสอบ API Key" });
     }
 }
