@@ -1,49 +1,87 @@
 /* ==========================================================
-   PROVE AI - STABLE HANDLER
-   ใช้การกำหนดค่ารุ่น API และ Model ให้ชัดเจนเพื่อหลีกเลี่ยง 404
+   PROVE AI - FIXED STABLE HANDLER
+   รองรับ Gemini API รุ่นใหม่บน Vercel
 ========================================================== */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-    // 1. ตรวจสอบ Method
+
+    // อนุญาตเฉพาะ POST
     if (req.method !== "POST") {
-        return res.status(405).json({ error: "Method not allowed" });
+        return res.status(405).json({
+            error: "Method not allowed"
+        });
     }
 
     try {
-        // 2. ดึง API Key
+
+        // ======================================================
+        // 1. ตรวจสอบ API KEY
+        // ======================================================
         const apiKey = process.env.GEMINI_API_KEY;
+
         if (!apiKey) {
-            throw new Error("ไม่ได้ตั้งค่า GEMINI_API_KEY ใน Environment Variables");
+            return res.status(500).json({
+                reply: "ไม่พบ GEMINI_API_KEY ใน Vercel Environment Variables"
+            });
         }
 
-        // 3. เตรียมข้อมูลจาก Request
+        // ======================================================
+        // 2. รับข้อมูลจาก Frontend
+        // ======================================================
         const { message, context } = req.body || {};
-        if (!message) return res.status(400).json({ error: "ไม่มีข้อความ" });
 
-        // 4. เชื่อมต่อ Google Generative AI
+        if (!message) {
+            return res.status(400).json({
+                reply: "ไม่มีข้อความที่ส่งมา"
+            });
+        }
+
+        // ======================================================
+        // 3. เชื่อม Gemini
+        // ======================================================
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // 5. เลือกใช้โมเดลและเวอร์ชันที่เสถียรที่สุด
-        // การระบุ apiVersion: "v1beta" ช่วยลดปัญหา 404 ใน SDK รุ่นใหม่
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
-            apiVersion: "v1beta"
+        // ใช้ model ใหม่ที่เสถียรกว่า
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash-latest"
         });
-        
-        // 6. ส่งข้อความไปยัง AI
-        const prompt = `บริบท: ${context || "ไม่มี"}\nคำถาม: ${message}`;
+
+        // ======================================================
+        // 4. Prompt
+        // ======================================================
+        const prompt = `
+คุณคือผู้ช่วย AI ภาษาไทย
+
+บริบท:
+${context || "ไม่มี"}
+
+คำถาม:
+${message}
+`;
+
+        // ======================================================
+        // 5. Generate
+        // ======================================================
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        
-        // 7. ส่งคำตอบกลับ
-        return res.status(200).json({ reply: response.text() });
+
+        const response = result.response.text();
+
+        // ======================================================
+        // 6. ส่งกลับ
+        // ======================================================
+        return res.status(200).json({
+            reply: response
+        });
 
     } catch (err) {
-        console.error("API Error Details:", err);
-        return res.status(500).json({ 
-            reply: `ระบบขัดข้อง: ${err.message}` 
+
+        console.error("GEMINI ERROR:", err);
+
+        return res.status(500).json({
+            reply: "ระบบ AI ขัดข้อง",
+            error: err.message
         });
     }
 }
