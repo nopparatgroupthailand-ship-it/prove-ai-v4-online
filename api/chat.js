@@ -1,16 +1,9 @@
 /* ==========================================================
-   PROVE AI - SDK MANAGED HANDLER
-   ใช้ SDK จัดการ Endpoint ให้อัตโนมัติ ไม่ระบุ v1beta เอง
+   PROVE AI - STABLE HANDLER (FORCE ENDPOINT)
+   แก้ไขปัญหา 404 โดยการระบุ BaseURL และรุ่นของ API ให้ชัดเจน
 ========================================================== */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// ดึง API Key
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
-// เลือกใช้โมเดลที่แนะนำ (แนะนำให้ลอง gemini-1.5-flash เป็นอันดับแรก)
-const MODEL_NAME = "gemini-1.5-flash";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -18,17 +11,23 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { message, context } = req.body || {};
-        
-        if (!message) return res.status(400).json({ error: "ไม่มีข้อความ" });
-        if (!genAI) throw new Error("API Key ไม่ได้ตั้งค่าในระบบ");
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("ไม่ได้ตั้งค่า GEMINI_API_KEY ในระบบ");
 
-        // ให้ SDK จัดการการเชื่อมต่อให้โดยอัตโนมัติ
-        const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+        const { message, context } = req.body || {};
+        if (!message) return res.status(400).json({ error: "ไม่มีข้อความ" });
+
+        // สร้าง instance ของ GoogleGenerativeAI
+        const genAI = new GoogleGenerativeAI(apiKey);
+
+        // ระบุ model และ apiVersion ให้ชัดเจนเพื่อแก้ปัญหา 404
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash",
+            apiVersion: "v1beta" 
+        });
         
         const prompt = `บริบท: ${context || "ไม่มี"}\nคำถาม: ${message}`;
         
-        // เรียกใช้ generateContent
         const result = await model.generateContent(prompt);
         const response = await result.response;
         
