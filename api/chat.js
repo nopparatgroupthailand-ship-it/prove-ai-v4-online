@@ -1,5 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export default async function handler(req, res) {
 
     // ==================================================
@@ -43,63 +47,75 @@ export default async function handler(req, res) {
         // ==================================================
         // BODY
         // ==================================================
-        console.log("BODY:", req.body);
-
         const { message, context } = req.body || {};
+
+        console.log("BODY:", req.body);
 
         if (!message) {
             return res.status(400).json({
-                error: "ไม่มีข้อความ message"
+                error: "ไม่มีข้อความ"
             });
         }
 
         // ==================================================
-        // GEMINI INIT
+        // GEMINI
         // ==================================================
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        console.log("GEN AI CREATED");
-
-        // ==================================================
-        // ใช้ model ฟรีขนาดเล็ก
-        // ==================================================
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash-8b"
+            model: "gemini-2.0-flash"
         });
 
-        console.log("MODEL CREATED");
+        console.log("MODEL READY");
 
         // ==================================================
-        // PROMPT
+        // ลด token
         // ==================================================
         const prompt = `
-ตอบภาษาไทยแบบกระชับ
-
-บริบท:
-${context || "ไม่มี"}
-
-คำถาม:
+${context || ""}
 ${message}
 `;
 
-        console.log("PROMPT READY");
+        let result;
+
+        try {
+
+            // ==================================================
+            // TRY #1
+            // ==================================================
+            result = await model.generateContent(prompt);
+
+        } catch (err) {
+
+            console.log("FIRST ERROR:", err.message);
+
+            // ==================================================
+            // ถ้า quota minute เต็ม
+            // ==================================================
+            if (err.status === 429) {
+
+                console.log("WAIT 8 SECONDS...");
+
+                await sleep(8000);
+
+                // ==================================================
+                // TRY #2
+                // ==================================================
+                result = await model.generateContent(prompt);
+
+            } else {
+
+                throw err;
+            }
+        }
 
         // ==================================================
-        // GENERATE
+        // RESPONSE
         // ==================================================
-        const result = await model.generateContent(prompt);
+        const text = result.response.text();
 
-        console.log("GENERATE SUCCESS");
+        console.log("SUCCESS");
 
-        const response = result.response;
-
-        const text = response.text();
-
-        console.log("TEXT:", text);
-
-        // ==================================================
-        // SUCCESS
-        // ==================================================
         return res.status(200).json({
             success: true,
             reply: text
@@ -107,33 +123,13 @@ ${message}
 
     } catch (err) {
 
-        console.error("=== GEMINI ERROR ===");
+        console.error("=== FINAL ERROR ===");
         console.error(err);
 
-        // ==================================================
-        // RATE LIMIT
-        // ==================================================
-        if (err.status === 429) {
-
-            return res.status(429).json({
-                success: false,
-                error: "Quota ฟรีของ Gemini หมดชั่วคราว",
-                solution: [
-                    "รอ 1-5 นาทีแล้วลองใหม่",
-                    "สร้าง API KEY ใหม่",
-                    "เปิด Billing Google Cloud",
-                    "ลดจำนวนข้อความที่ส่ง"
-                ]
-            });
-        }
-
-        // ==================================================
-        // OTHER ERROR
-        // ==================================================
         return res.status(500).json({
             success: false,
-            error: err.message || "Unknown Error",
-            details: String(err)
+            error: err.message,
+            status: err.status || 500
         });
     }
 }
