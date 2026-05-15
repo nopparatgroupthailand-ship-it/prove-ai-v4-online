@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         }
 
         // ==================================================
-        // BODY
+        // REQUEST BODY
         // ==================================================
         const { message, context } = req.body || {};
 
@@ -35,7 +35,6 @@ export default async function handler(req, res) {
         // ==================================================
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // ใช้รุ่นที่รองรับแน่นอน
         const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash"
         });
@@ -61,7 +60,7 @@ ${message}
         const text = response.text();
 
         // ==================================================
-        // RESPONSE
+        // RETURN
         // ==================================================
         return res.status(200).json({
             reply: text
