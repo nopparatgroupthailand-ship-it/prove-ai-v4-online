@@ -9,7 +9,9 @@ export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    // รองรับ preflight
+    // ==================================================
+    // OPTIONS
+    // ==================================================
     if (req.method === "OPTIONS") {
         return res.status(200).end();
     }
@@ -59,10 +61,10 @@ export default async function handler(req, res) {
         console.log("GEN AI CREATED");
 
         // ==================================================
-        // MODEL
+        // ใช้ model ฟรีขนาดเล็ก
         // ==================================================
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash"
+            model: "gemini-1.5-flash-8b"
         });
 
         console.log("MODEL CREATED");
@@ -71,6 +73,8 @@ export default async function handler(req, res) {
         // PROMPT
         // ==================================================
         const prompt = `
+ตอบภาษาไทยแบบกระชับ
+
 บริบท:
 ${context || "ไม่มี"}
 
@@ -106,6 +110,26 @@ ${message}
         console.error("=== GEMINI ERROR ===");
         console.error(err);
 
+        // ==================================================
+        // RATE LIMIT
+        // ==================================================
+        if (err.status === 429) {
+
+            return res.status(429).json({
+                success: false,
+                error: "Quota ฟรีของ Gemini หมดชั่วคราว",
+                solution: [
+                    "รอ 1-5 นาทีแล้วลองใหม่",
+                    "สร้าง API KEY ใหม่",
+                    "เปิด Billing Google Cloud",
+                    "ลดจำนวนข้อความที่ส่ง"
+                ]
+            });
+        }
+
+        // ==================================================
+        // OTHER ERROR
+        // ==================================================
         return res.status(500).json({
             success: false,
             error: err.message || "Unknown Error",
